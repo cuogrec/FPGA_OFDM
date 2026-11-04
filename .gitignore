@@ -1,0 +1,47 @@
+# ---------------------------------------------------------------
+# .gitignore cho du an OFDM thuy am 33 kHz (ZCU104)
+# Chi day ma nguon. Project Vivado/Vitis tao lai duoc tu tcl/build.tcl
+# ---------------------------------------------------------------
+
+# Project Vivado sinh ra boi build.tcl (tao lai: source tcl/build.tcl)
+vivado/
+.Xil/
+*.cache/
+*.runs/
+*.gen/
+*.hw/
+*.sim/
+*.ip_user_files/
+*.srcs/
+*.jou
+*.log
+*.str
+*.backup.*
+
+# Workspace Vitis (nguon app da nam trong sw/ofdm33_app.c)
+vitis_ws*/
+_ide/
+**/build/
+*.elf
+
+# File xuat lon: dua len GitHub Release thay vi commit
+*.bit
+*.xsa
+*.ltx
+
+# MATLAB / Python
+*.asv
+*.mat
+*.wav
+__pycache__/
+*.pyc
+
+# File tam cua mo phong
+sim/bb_in.hex
+sim/words_out.txt
+sim/tb
+
+# He dieu hanh
+Thumbs.db
+desktop.ini
+.DS_Store
