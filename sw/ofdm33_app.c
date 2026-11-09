@@ -7,6 +7,9 @@
  *    h  help                    s  status (counters, CFO, settings)
  *    n  noise floor -> sets rmin (play NOTHING from the Focusrite)
  *    l  level meter (play a 33 kHz TONE: run_tx.m S.mode='tone')
+ *    e  FEC on/off: rate-1/2 K=7 convolutional code (run_tx.m S.fec = true), Viterbi on PS
+ *    k  test mode on/off: known payload from run_tx.m S.mode='test', count bit errors
+ *    m  monitor a test tone (tone_forever.m): CSV line per 0.5 s, any key stops
  *    d  capture raw baseband, dump over UART (for MATLAB read_uart_dump.m)
  *    g  run receiver: print every decoded frame (any key stops)
  *    + / -  gain_shift up / down      t  threshold   o  timing offset
@@ -108,7 +111,9 @@ static struct {
     int      toffs;     /* -128..127 */
     unsigned bbsh;      /* 0..7 */
     u32      rmin;
-} S = { 0, 0, 1, 0, 150, 0, 2, 1000 };
+    unsigned test;      /* 1 = frames carry the known test payload */
+    unsigned fec;       /* 1 = frames are FEC coded (111 info bytes)  */
+} S = { 0, 0, 1, 0, 150, 0, 2, 1000, 0, 0 };
 
 static void cfg_write(void)
 {
@@ -301,6 +306,55 @@ static void cmd_level(void)
     if (fabs(df) > 30) printf("  !! offset > 30 Hz: tone not at 33 kHz or sample-rate mismatch (Focusrite at 96 kHz?)\r\n");
 }
 
+/* Continuous tone monitor: for a test tone from tone_forever.m (fixed or step).
+ * Every 4096-sample packet (0.512 s) prints one CSV line
+ *     M,<k>,<f_Hz>,<dBFS>,<|bb|>,<peak>,<coh>
+ * f_Hz = 33000 + measured offset (so no sync with MATLAB is needed), dBFS =
+ * ADC level, coh = tone coherence 0..1 (1 = clean single tone, <0.5 = noise /
+ * several tones / sweep in progress). Packets are taken back to back (no
+ * drain between them), so there is one line per 0.512 s. Any key stops. */
+static void tone_coh(int n, double *coh)
+{
+    double cr = 0, ci = 0, p = 0, pr = 0, pi = 0;
+    for (int k = 0; k < n; k++) {
+        double re = (s16)(raw_buf[k] & 0xFFFF), im = (s16)(raw_buf[k] >> 16);
+        p += re * re + im * im;
+        if (k) { cr += pr * re + pi * im; ci += pr * im - pi * re; }
+        pr = re; pi = im;
+    }
+    *coh = (p > 0) ? sqrt(cr * cr + ci * ci) / p : 0.0;
+}
+
+static void cmd_monitor(void)
+{
+    printf("Monitor tone (any key stops). Columns: M,k,f_Hz,dBFS,|bb|,peak,coh\r\n"
+           "Save the terminal log, then run read_tone_log.m in MATLAB.\r\n");
+    S.sync_en = 0; S.tap_en = 0; cfg_write();
+    dma_drain(DMA_RAW, 800);                    /* old packets out */
+    dma_reset(DMA_RAW);
+    S.tap_en = 1; cfg_write();
+    int k = 0, err = 0;
+    while (!key_ready()) {
+        dma_arm(DMA_RAW, raw_buf, RAW_PKT * 4);
+        int t = 0, r;
+        while ((r = dma_done(DMA_RAW)) == 0 && t < 3000 && !key_ready()) { usleep(1000); t++; }
+        if (r != 1) { err = (r < 0) ? -1 : (t >= 3000); break; }
+        Xil_DCacheInvalidateRange((UINTPTR)raw_buf, RAW_PKT * 4);
+        double p, pk, mr, mi, df, coh;
+        raw_stats(RAW_PKT, &p, &pk, &mr, &mi, &df);
+        tone_coh(RAW_PKT, &coh);
+        double a = sqrt(p);
+        double adc = a / (4096.0 * (1 << S.gain) * FIR_GAIN);
+        printf("M,%d,%.1f,%.1f,%.0f,%.0f,%.2f\r\n", k++, 33000.0 + df,
+               20 * log10(adc + 1e-12), a, pk, coh);
+    }
+    S.tap_en = 0; cfg_write();
+    if (key_ready()) (void)key_get();           /* swallow the stop key */
+    dma_drain(DMA_RAW, 800);
+    if (err) printf("monitor: DMA %s -- is the ADC clock running?\r\n", err < 0 ? "error" : "timeout");
+    printf("monitor stopped (%d lines)\r\n", k);
+}
+
 static void cmd_dump(void)
 {
     int np = read_int("packets of 4096 samples (0.512 s each)", 4);
@@ -321,15 +375,99 @@ static void cmd_status(void)
     printf("sync frames %lu, demap frames %lu, I2S drops %lu, last CFO %+.2f Hz\r\n",
            (unsigned long)(s1 & 0xFFFF), (unsigned long)(s2 & 0xFFFF),
            (unsigned long)(s2 >> 16), ph / 8192.0 * DF);
-    printf("gain_shift %u  ch %c  sync_en %u  thr %u (%.2f)  toffs %d  bb_shift %u  rmin %lu\r\n",
+    printf("gain_shift %u  ch %c  sync_en %u  thr %u (%.2f)  toffs %d  bb_shift %u  rmin %lu  test %u  fec %u\r\n",
            S.gain, S.ch ? 'R' : 'L', S.sync_en, S.thr, S.thr / 256.0, S.toffs, S.bbsh,
-           (unsigned long)S.rmin);
+           (unsigned long)S.rmin, S.test, S.fec);
 }
+
+/* ---------------- measurement helpers ------------------------------------ */
+static unsigned long now_ms(void)          /* ARMv8 generic timer, no BSP header needed */
+{
+    unsigned long long cnt, frq;
+    __asm__ volatile ("mrs %0, cntpct_el0" : "=r" (cnt));
+    __asm__ volatile ("mrs %0, cntfrq_el0" : "=r" (frq));
+    if (frq < 1000ULL) frq = 100000000ULL;   /* CNTFRQ not set: assume 100 MHz */
+    return (unsigned long)(cnt / (frq / 1000ULL));
+}
+/* Known test payload (MATLAB ofdm_test_payloads.m, run_tx.m S.mode = 'test'):
+ *   byte 0 = seq, 1 = 0xE5, 2 = 0, 3..221 = (29*k + 7) mod 256, 222..223 = CRC.
+ * Bit errors are counted over bytes 1..221 = 1768 bits (seq and CRC excluded). */
+#define TEST_MARK  0xE5
+#define TEST_BITS  1768
+static int popcount8(u8 v) { int n = 0; while (v) { n += v & 1; v >>= 1; } return n; }
+static int test_biterr(const u8 *p)
+{
+    int e = popcount8((u8)(p[1] ^ TEST_MARK)) + popcount8(p[2]);
+    for (int k = 3; k < 222; k++) e += popcount8((u8)(p[k] ^ (u8)(29 * k + 7)));
+    return e;
+}
+
+/* FEC_BEGIN ------------------------------------------------------------------
+ * Rate-1/2 K=7 convolutional code, generators 133/171 (octal), tail-terminated.
+ * Must match MATLAB ofdm_fec_frame.m / ofdm_fec_unframe.m:
+ *   111 info bytes -> 888 bits (LSB first) + 2 pad + 6 tail = 896 bits
+ *   encoder: reg = (b << 6) | state, out = parity(reg & 0133), parity(reg & 0171),
+ *            state = reg >> 1
+ *   block interleaver: coded bit k -> transmitted position (k % 112) * 16 + k / 112
+ * Hard-decision Viterbi; the final path metric = number of channel bits corrected. */
+#define FEC_INFO_BYTES  111
+#define FEC_TEXT_BYTES  106
+#define FEC_STEPS       896
+#define FEC_CODED_BITS  1792
+#define FEC_TEST_BITS   864          /* test payload bytes 1..108 */
+static u8 fec_o0[128], fec_o1[128];
+static unsigned long long fec_surv[FEC_STEPS];
+static u8 fec_rx[FEC_CODED_BITS], fec_c[FEC_CODED_BITS], fec_u[FEC_STEPS];
+static int fec_par7(unsigned v) { v &= 0x7Fu; v ^= v >> 4; v ^= v >> 2; v ^= v >> 1; return (int)(v & 1u); }
+static void fec_init(void)
+{
+    for (unsigned r = 0; r < 128; r++) { fec_o0[r] = (u8)fec_par7(r & 0x5Bu); fec_o1[r] = (u8)fec_par7(r & 0x79u); }
+}
+/* in: 224 de-whitened bytes; out: 111 info bytes; returns channel bits corrected */
+static int fec_decode(const u8 *in, u8 *out)
+{
+    unsigned pm[64], npm[64];
+    for (int j = 0; j < FEC_CODED_BITS; j++) fec_rx[j] = (u8)((in[j >> 3] >> (j & 7)) & 1u);
+    for (int k = 0; k < FEC_CODED_BITS; k++) fec_c[k] = fec_rx[(k % 112) * 16 + k / 112];
+    for (int st = 0; st < 64; st++) pm[st] = st ? 100000u : 0u;
+    for (int t = 0; t < FEC_STEPS; t++) {
+        u8 a = fec_c[2 * t], b = fec_c[2 * t + 1];
+        unsigned long long sv = 0;
+        for (unsigned ns = 0; ns < 64; ns++) {
+            unsigned bin = ns >> 5, s0 = (ns & 31u) << 1, s1 = s0 | 1u;
+            unsigned r0 = (bin << 6) | s0, r1 = (bin << 6) | s1;
+            unsigned m0 = pm[s0] + (unsigned)(fec_o0[r0] ^ a) + (unsigned)(fec_o1[r0] ^ b);
+            unsigned m1 = pm[s1] + (unsigned)(fec_o0[r1] ^ a) + (unsigned)(fec_o1[r1] ^ b);
+            if (m1 < m0) { npm[ns] = m1; sv |= 1ULL << ns; } else npm[ns] = m0;
+        }
+        fec_surv[t] = sv;
+        for (int st = 0; st < 64; st++) pm[st] = npm[st];
+    }
+    unsigned st = 0;
+    for (int t = FEC_STEPS - 1; t >= 0; t--) {
+        fec_u[t] = (u8)(st >> 5);
+        st = ((st & 31u) << 1) | (unsigned)((fec_surv[t] >> st) & 1ULL);
+    }
+    for (int i = 0; i < FEC_INFO_BYTES; i++) {
+        u8 v = 0;
+        for (int bt = 0; bt < 8; bt++) v |= (u8)(fec_u[8 * i + bt] << bt);
+        out[i] = v;
+    }
+    return (int)pm[0];
+}
+static int fec_test_biterr(const u8 *q)
+{
+    int e = popcount8((u8)(q[1] ^ TEST_MARK)) + popcount8(q[2]);
+    for (int k = 3; k < 109; k++) e += popcount8((u8)(q[k] ^ (u8)(29 * k + 7)));
+    return e;
+}
+/* FEC_END -------------------------------------------------------------------- */
 
 static void cmd_run(void)
 {
     static u8 seg[256][220]; static u8 seglen[256]; static u8 have[256];
     int nok = 0, nbad = 0, nfr_msg = 0;
+    unsigned long berr = 0, bits = 0, rawerr = 0, rawbits = 0, t0 = now_ms();
     memset(have, 0, sizeof have);
     S.sync_en = 0; cfg_write();
     int stale = dma_drain(DMA_BITS, 20);                /* frames left in fifo_bits */
@@ -337,8 +475,10 @@ static void cmd_run(void)
     dma_reset(DMA_BITS);
     u32 st1 = Xil_In32(GPIO_STAT + GPIO_DATA), st2 = Xil_In32(GPIO_STAT + GPIO2_DATA);
     S.sync_en = 1; cfg_write();
-    printf("Receiving... (any key = stop)  rmin %lu  gain_shift %u\r\n",
-           (unsigned long)S.rmin, S.gain);
+    printf("Receiving... (any key = stop)  rmin %lu  gain_shift %u%s\r\n",
+           (unsigned long)S.rmin, S.gain, S.test ? "  TEST MODE" : "");
+    if (S.fec) printf("FEC ON (rate 1/2, Viterbi)\r\n");
+    if (S.test) printf("F,t_ms,seq,crc_ok,cfo_hz,bit_err,bytes,raw_err\r\n");
     dma_arm(DMA_BITS, bits_buf, FRAME_BYTES);
     while (!key_ready()) {
         int r = dma_done(DMA_BITS);
@@ -351,14 +491,35 @@ static void cmd_run(void)
         for (int k = 0; k < FRAME_BYTES; k++) p[k] = bits_buf[k] ^ whiten[k];
         dma_arm(DMA_BITS, bits_buf, FRAME_BYTES);       /* re-arm early */
 
-        int ok = (got == FRAME_BYTES) && (crc16(p, 222) == (u16)((p[222] << 8) | p[223]));
+        int ok, nraw = -1, maxlen = 219;
+        if (S.fec) {                                     /* Viterbi -> 111 info bytes */
+            u8 q[FEC_INFO_BYTES];
+            nraw = fec_decode(p, q);
+            memset(p, 0, sizeof p);
+            memcpy(p, q, FEC_INFO_BYTES);
+            ok = (got == FRAME_BYTES) && (crc16(p, 109) == (u16)((p[109] << 8) | p[110]));
+            maxlen = FEC_TEXT_BYTES;
+        } else {
+            ok = (got == FRAME_BYTES) && (crc16(p, 222) == (u16)((p[222] << 8) | p[223]));
+        }
         s16 ph = (s16)(Xil_In32(GPIO_STAT + GPIO_DATA) >> 16);
-        int len = p[2] > 219 ? 219 : p[2];
+        int len = p[2] > maxlen ? maxlen : p[2];
         char txt[220]; memcpy(txt, &p[3], len); txt[len] = 0;
         if (ok) nok++; else nbad++;
-        printf("[%s] seq %3u/%u len %3d CFO %+6.2f Hz  bytes %lu  \"%s\"\r\n",
-               ok ? "OK " : "BAD", p[0], p[1], len, ph / 8192.0 * DF, (unsigned long)got,
+        unsigned long tf = now_ms() - t0;
+        if (S.test) {                                    /* machine-readable line */
+            int e = S.fec ? fec_test_biterr(p) : test_biterr(p);
+            berr += (unsigned long)e; bits += S.fec ? FEC_TEST_BITS : TEST_BITS;
+            if (nraw >= 0) { rawerr += (unsigned long)nraw; rawbits += FEC_CODED_BITS; }
+            printf("F,%lu,%u,%d,%+.2f,%d,%lu,%d\r\n", tf, p[0], ok, ph / 8192.0 * DF, e,
+                   (unsigned long)got, nraw >= 0 ? nraw : e);
+            continue;
+        }
+        printf("[%s] t %7lu ms seq %3u/%u len %3d CFO %+6.2f Hz  bytes %lu  \"%s\"",
+               ok ? "OK " : "BAD", tf, p[0], p[1], len, ph / 8192.0 * DF, (unsigned long)got,
                ok ? txt : "");
+        if (nraw >= 0) printf("  fixed %d", nraw);
+        printf("\r\n");
         if (ok && p[1] > 0 && p[0] < p[1]) {            /* assemble multi-frame text */
             if (!have[p[0]]) { have[p[0]] = 1; memcpy(seg[p[0]], &p[3], len); seglen[p[0]] = (u8)len; nfr_msg++; }
             if (nfr_msg >= p[1]) {
@@ -375,12 +536,20 @@ static void cmd_run(void)
     printf("stopped: %d OK, %d CRC errors | detected %u, demapped %u, I2S drops %u\r\n",
            nok, nbad, (unsigned)((e1 - st1) & 0xFFFF), (unsigned)((e2 - st2) & 0xFFFF),
            (unsigned)(((e2 >> 16) - (st2 >> 16)) & 0xFFFF));
+    if (S.test && bits)
+        printf("test: %lu bit errors / %lu bits, BER %.2e, frames with errors %d of %d\r\n",
+               berr, bits, (double)berr / (double)bits, nbad, nok + nbad);
+    if (S.fec && rawbits)
+        printf("fec: %lu channel bit errors corrected / %lu coded bits, channel BER %.2e\r\n",
+               rawerr, rawbits, (double)rawerr / (double)rawbits);
 }
 
 static void help(void)
 {
     printf("\r\n--- OFDM 33 kHz RX (ZCU104) ---\r\n"
            " h help   s status   n noise->rmin   l level (33 kHz tone)   d raw dump\r\n"
+           " m monitor tone (level + frequency, one CSV line per 0.5 s)\r\n"
+           " k test mode (known payload, bit-error count in 'g')   e FEC on/off\r\n"
            " g receive frames    +/- gain_shift   t thr   o toffs   b bb_shift   c L/R\r\n"
            " (frame detector runs only inside 'g'; counters are printed when 'g' stops)\r\n");
 }
@@ -392,6 +561,7 @@ int main(void)
            (unsigned long)I2S_BASE, (unsigned long)DMA_BITS, (unsigned long)DMA_RAW,
            (unsigned long)GPIO_CFG, (unsigned long)GPIO_STAT);
     make_whiten();
+    fec_init();
     S.sync_en = 0; cfg_write();
     i2s_init();
     dma_reset(DMA_BITS); dma_reset(DMA_RAW);
@@ -407,6 +577,7 @@ int main(void)
             case 'n': cmd_noise(); break;
             case 'l': cmd_level(); break;
             case 'd': cmd_dump(); break;
+            case 'm': cmd_monitor(); break;
             case 'g': cmd_run(); break;
             case '+': if (S.gain < 15) { S.gain++; S.rmin = rmin_sat(4.0 * S.rmin); }
                       cfg_write(); printf("gain_shift %u  (rmin -> %lu)\r\n", S.gain, (unsigned long)S.rmin); break;
@@ -416,6 +587,10 @@ int main(void)
             case 'o': S.toffs = read_int("toffs (samples, signed)", S.toffs); cfg_write(); break;
             case 'b': S.bbsh = (unsigned)read_int("bb_shift 0..7", S.bbsh) & 7; cfg_write(); break;
             case 'c': S.ch ^= 1; cfg_write(); printf("ADC channel %c\r\n", S.ch ? 'R' : 'L'); break;
+            case 'k': S.test ^= 1u;
+                      printf("test mode %s (MATLAB run_tx.m: S.mode = 'test')\r\n", S.test ? "ON" : "off"); break;
+            case 'e': S.fec ^= 1u;
+                      printf("FEC %s (MATLAB run_tx.m: S.fec = true)\r\n", S.fec ? "ON" : "off"); break;
             case 'r': S.rmin = (u32)read_int("rmin", (int)S.rmin); cfg_write(); break;
             default: break;
         }

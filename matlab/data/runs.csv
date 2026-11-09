@@ -1,0 +1,12 @@
+time,cmd,tag,dist_m,depth_m,gain_shift,rmin,test,n_frames,crc_ok,detected,demapped,i2s_drops,ber,cfo_mean_hz,file,note
+2026-11-09 17:02:07,g,thu,1,NaN,5,1.07374e+09,0,0,0,0,0,0,NaN,NaN,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261109_170151_g_thu.csv,""
+2026-11-09 17:05:19,g,thu,1,NaN,5,1.46579e+06,1,50,14,50,50,0,0.00115,0.353,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261109_170453_g_thu.csv,""
+2026-11-09 17:15:29,g,thu,1,NaN,4,47789,1,50,15,50,50,0,0.00129,0.4,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261109_171503_g_thu.csv,""
+2026-11-09 17:16:47,g,thu,1,NaN,4,47789,1,50,2,50,50,0,0.00296,0.399,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261109_171621_g_thu.csv,""
+2026-11-09 17:19:03,d,best,NaN,NaN,4,47789,1,16,1,,,,0.0658,2.29,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261109_171754_d_best_dump.txt,""
+2026-11-09 17:59:51,g,fec_1m,1,NaN,4,4905,1,200,72,200,200,0,0.32,14.8,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261109_175808_g_fec_1m.csv,""
+2026-11-09 18:37:37,g,fec_1m_b,1,NaN,4,200000,1,0,0,0,0,0,NaN,NaN,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261109_183721_g_fec_1m_b.csv,""
+2026-11-09 18:45:12,g,fec_1m_b,1,NaN,4,200000,1,0,0,0,0,0,NaN,NaN,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261109_184456_g_fec_1m_b.csv,""
+2026-11-09 18:48:24,g,fec_1m,1,NaN,4,200000,1,93,93,93,93,0,0,0.317,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261109_184720_g_fec_1m.csv,""
+2026-11-09 18:51:09,g,fec_1m_b,1,NaN,4,200000,1,0,0,0,0,0,NaN,NaN,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261109_185053_g_fec_1m_b.csv,""
+2026-11-09 18:57:36,g,fec_1m_b,1,NaN,4,200000,1,200,200,200,200,0,0,0.347,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261109_185553_g_fec_1m_b.csv,""

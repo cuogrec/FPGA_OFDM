@@ -36,7 +36,11 @@ rmin = 4 * prctile_(Rd, 10);
 above = (M >= thr) & (Rd >= rmin);
 
 res = struct('seq', {}, 'nfrag', {}, 'len', {}, 'text', {}, 'crc_ok', {}, ...
-             'cfo_hz', {}, 'snr_db', {}, 'start', {}, 'bytes', {});
+             'cfo_hz', {}, 'snr_db', {}, 'start', {}, 'bytes', {}, ...
+             'H', {}, 'zd', {}, 'pil', {});
+% H   : 64 x 1, kenh uoc luong tu LTF (thu tu P.active)
+% zd  : 56 x 16, ky hieu du lieu sau can bang (cot = symbol)
+% pil : 8 x 16, Y_pilot / H_LTF moi symbol (=1 neu kenh khong doi trong khung)
 d = 1;  Zall = [];
 while d <= nd
     if ~above(d), d = d + 1; continue; end
@@ -56,10 +60,12 @@ while d <= nd
     Y   = @(s) fft(seg(s*SL + (1:N)));                % s = 1: LTF, 2..: data
     ia  = mod(P.active, N) + 1;
     Yl  = Y(1);  H = zeros(N,1);  H(ia) = Yl(ia) .* P.ltf(:);
-    bits = zeros(P.bits_per_frame, 1);  Zf = [];
+    bits = zeros(P.bits_per_frame, 1);  Zf = [];  pil = zeros(numel(P.pilots), P.NSYM);
+    ip  = mod(P.pilots, N) + 1;
     for s = 1:P.NSYM
         Ys = Y(s+1);  Z = Ys .* conj(H);
         zp = Z(mod(P.pilots, N) + 1);                  % pilot
+        pil(:, s) = Ys(ip) ./ H(ip);
         C  = zeros(N,1);
         for f = P.data
             ka = find(P.pilots <= f, 1, 'last');  if isempty(ka), ka = 1; end
@@ -76,10 +82,14 @@ while d <= nd
     q  = (sign(real(Zf)) + 1j*sign(imag(Zf))) / sqrt(2);
     snr = 10*log10(mean(abs(q).^2) / mean(abs(Zf*sqrt(1/mean(abs(Zf).^2)) - q).^2));
     k = numel(res) + 1;
-    res(k) = ofdm_parse_payload(ofdm_bits_to_payload(bits, P));
-    res(k).cfo_hz = phi / pi * P.fsb / N;
-    res(k).snr_db = snr;
-    res(k).start  = n0;
+    t = ofdm_parse_payload(ofdm_bits_to_payload(bits, P));
+    t.cfo_hz = phi / pi * P.fsb / N;
+    t.snr_db = snr;
+    t.start  = n0;
+    t.H      = H(ia);
+    t.zd     = reshape(Zf, numel(P.data), P.NSYM);
+    t.pil    = pil;
+    res(k) = orderfields(t, res);
     Zall = [Zall; Zf]; %#ok<AGROW>
     d = n0 + SL*(P.NSYM+2) - SL;                       % tiep tuc sau khung
 end

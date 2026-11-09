@@ -1,0 +1,2 @@
+time,tag,n_frames,crc_ok,fer,ber,snr_mean_db,snr_min_db,cfo_mean_hz,cfo_std_hz,edge_drop_db,ripple_db,snr_sc_worst_db,snr_sc_worst_hz,tau_rms_ms,excess20_ms,sir_cp_db,rho_mean,amp_fluct_db,phase_jitter_deg,resid_cfo_hz,files
+2026-11-09 17:19:00,best,16,1,0.9375,0.06575,12.49,0.1954,2.288,6.326,0.5839,16.23,0.3377,3.131e+04,2.444,11.5,7.076,0.7659,2.977,20.5,-0.004932,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261109_171754_d_best_dump.txt
