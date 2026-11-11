@@ -1,0 +1,15 @@
+mode,amp,amp_db,rmin,sent,detected,ok,ok_pct,ber,ch_ber,raw_mean,raw_max,file
+fec,0.900,0.0,200000,100,99,2,2.0,0.0478,0.0734,131.61,148,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261110_183956_g_A1_fec_amp090.csv
+fec,0.700,-2.2,120988,100,99,52,52.0,0.00898,0.0551,98.74,113,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261110_184051_g_A1_fec_amp070.csv
+fec,0.500,-5.1,61728,100,99,99,99.0,0,0.0237,42.56,55,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261110_184146_g_A1_fec_amp050.csv
+fec,0.350,-8.2,30247,100,99,99,99.0,0,0.0101,18.15,28,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261110_184241_g_A1_fec_amp035.csv
+fec,0.250,-11.1,20000,100,99,99,99.0,0,0.0008,1.43,5,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261110_184335_g_A1_fec_amp025.csv
+fec,0.180,-14.0,20000,100,99,98,98.0,3.51e-05,0.000287,0.52,51,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261110_184430_g_A1_fec_amp018.csv
+fec,0.120,-17.5,20000,100,99,99,99.0,0,0,0.00,0,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261110_184525_g_A1_fec_amp012.csv
+fec,0.080,-21.0,20000,100,99,93,93.0,0.0297,0.00759,13.60,234,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261110_184620_g_A1_fec_amp008.csv
+fec,0.050,-25.1,20000,100,99,99,99.0,0,0.000101,0.18,18,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261110_184715_g_A1_fec_amp005.csv
+nofec,0.900,0.0,200000,100,99,0,0.0,0.0594,0.0594,104.98,143,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261110_184810_g_A1_nofec_amp090.csv
+nofec,0.700,-2.2,120988,100,99,0,0.0,0.0358,0.0358,63.29,78,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261110_184905_g_A1_nofec_amp070.csv
+nofec,0.500,-5.1,61728,100,99,0,0.0,0.0111,0.0111,19.57,27,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261110_185000_g_A1_nofec_amp050.csv
+nofec,0.350,-8.2,30247,100,99,0,0.0,0.0133,0.0133,23.46,877,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261110_185055_g_A1_nofec_amp035.csv
+nofec,0.250,-11.1,20000,100,99,95,95.0,0.0201,0.0201,35.56,897,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261110_185149_g_A1_nofec_amp025.csv

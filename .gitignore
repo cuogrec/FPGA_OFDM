@@ -45,3 +45,7 @@ sim/tb
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# Ket qua do: giu CSV va log trong matlab/data (log nho, can de doc lai)
+!matlab/data/*.log
+matlab/data/Claude outputs/

@@ -16,12 +16,13 @@ F.mode      = 'fixed';              % 'fixed' | 'step'
 F.freq      = 33000;                % Hz, dung cho che do 'fixed'
 F.step_list = 29000:500:37000;      % Hz, dung cho che do 'step'
 F.step_s    = 4;                    % giay moi buoc (che do 'step')
-F.amp       = 1;                  % bien do dinh 0..1 (giong S.amp trong run_tx.m)
+F.amp       = 1;                    % bien do dinh 0..1 (giong S.amp trong run_tx.m)
 F.ramp_ms   = 50;                   % tang dan bien do luc bat dau, tranh tieng "bup"
 F.out_ch    = 1;                    % 1 = Output 1, 2 = Output 2, 0 = ca hai
-F.device    = 'Scarlett';          % chuoi tim trong ten thiet bi (regexp)
+F.device    = 'Scarlett';           % chuoi tim trong ten thiet bi (regexp)
 F.driver    = '';                   % '' = mac dinh; 'ASIO' neu co Audio Toolbox + ASIO
 F.fs        = 96000;                % phai bang fs cua FPGA (96 kHz)
+F.bitdepth  = '24-bit integer';     % neu loi 'Unanticipated host error' thu '16-bit integer'
 F.blk       = 4096;                 % so mau moi khoi (~42.7 ms)
 
 %% ---------------- KIEM TRA ----------------
@@ -32,7 +33,7 @@ fprintf('Che do: %s | bien do %.2f (%.1f dBFS) | fs = %d Hz\n', ...
     F.mode, F.amp, 20*log10(F.amp), F.fs);
 
 %% ---------------- MO THIET BI ----------------
-args = {'SampleRate', F.fs, 'BitDepth', '24-bit integer'};
+args = {'SampleRate', F.fs, 'BitDepth', F.bitdepth};
 if ~isempty(F.driver), args = [args, {'Driver', F.driver}]; end
 w   = audioDeviceWriter(args{:});
 dev = getAudioDevices(w);
@@ -43,6 +44,22 @@ end
 w.Device = dev{k};
 fprintf('Phat qua: %s (%s)\n', dev{k}, w.Driver);
 cleanupObj = onCleanup(@() release(w));   % Ctrl+C -> tu dong giai phong card
+
+% Mo luong am thanh bang mot khoi im lang de bat loi thiet bi ngay, kem goi y sua
+try
+    w(zeros(F.blk, 2));
+catch ME
+    fprintf(2, ['\nKHONG MO DUOC THIET BI (%s, %s).\n' ...
+        ' Thu lan luot:\n' ...
+        '  1) Dong cac ung dung dang dung card (Focusrite Control, trinh duyet, Zoom, DAW, MATLAB khac),\n' ...
+        '     roi go  clear all  trong Command Window va chay lai.\n' ...
+        '  2) Windows: Sound > Output > Speakers (Scarlett Solo USB) > Properties > Advanced >\n' ...
+        '     Default Format = 24 bit, 96000 Hz (hoac 16 bit, 96000 Hz neu F.bitdepth = ''16-bit integer'').\n' ...
+        '  3) Doi F.driver = ''ASIO'' (can cai driver Focusrite; dat 96 kHz trong Focusrite Control)\n' ...
+        '     hoac F.driver = ''WASAPI'' neu bao khong co ASIO.\n' ...
+        '  4) Doi F.bitdepth = ''16-bit integer''.\n\n'], dev{k}, w.Driver);
+    rethrow(ME);
+end
 
 %% ---------------- VONG PHAT VO HAN ----------------
 n      = (0:F.blk-1).';

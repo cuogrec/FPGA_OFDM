@@ -41,7 +41,7 @@ vivado -mode batch -source tcl/build.tcl -tclargs impl  # + bitstream + XSA
 ```
 Cần board file ZCU104 (có sẵn trong 2024.2). Script tự chọn version IP mới nhất trong catalog; tham số IP nào không tồn tại sẽ được báo `INFO … skipped` thay vì dừng – hãy đọc log.
 
-**Trước khi tạo bitstream:** kiểm tra lại chân PMOD0 (J55) trong `xdc/ofdm33_zcu104.xdc` với master XDC ZCU104.
+**Chân PMOD0 (J55):** `xdc/ofdm33_zcu104.xdc` theo đúng cách đấu trên bàn thử: BCK→G8, OUT→H8, LRCK→G7, SCK→H7. MD0/MD1/FMT nối GND trên module, không có trong XDC.
 
 ## 4. Thanh ghi điều khiển (AXI GPIO)
 
@@ -66,7 +66,7 @@ Cần board file ZCU104 (có sẵn trong 2024.2). Script tự chọn version IP 
 
 - `sw/ofdm33_app.c` là ứng dụng bare-metal có menu UART: đo nhiễu, đo mức tone, dump baseband, chạy bộ thu. Xem `sw/README_SW.md`.
 - `TEST_LOOPBACK.md` mô tả cách nối thẳng Focusrite → PCM1808 → ZCU104 (bộ chia áp, chân MD/FMT nối GND, trình tự đo).
-- I2S Receiver: `C_NUM_CHANNELS = 1`, `C_32BIT_LR = 1` → BCK = 64 fs (PCM1808 với SCKI 256 fs không nhận 48 fs). PS ghi `0x30 = 1`, `0x20 = 2`, `0x08 = 1`.
+- I2S Receiver: `C_NUM_CHANNELS = 2` (1 đường dữ liệu I2S), `C_32BIT_LR = 1` → BCK = 64 fs (PCM1808 với SCKI 256 fs không nhận 48 fs). PS ghi `0x30 = 1`, `0x20 = 2`, `0x08 = 1`.
 
 ## 6. Kiểm chứng đã làm
 
@@ -85,4 +85,25 @@ Mô phỏng Icarus end-to-end RTL (sync → CORDIC → FFT → eq → cmpy → d
 Kiểm tra chéo toàn chuỗi: WAV do `matlab/run_tx.m` tạo → kênh 4 tia, 25 dB, 80 ppm → mô hình DDC → RTL → `ofdm_decode_dma`: 5/5 khung CRC OK, ra đúng văn bản.
 Sửa ngày 29/10: `ofdm_qpsk_demap` không còn ngoại suy pilot ở mép băng (|f| > 28 dùng pilot gần nhất). Bản cũ có thể đảo dấu khi kênh fading mạnh.
 
-Chưa kiểm được: chạy Vivado thật (tên tham số IP, timing). Tcl đã chạy khô với lệnh Vivado giả lập.
+Đã build thật bằng Vivado/Vitis 2024.2 và chạy trên ZCU104 (xem mục 7).
+
+## 7. FEC, công cụ đo và kết quả thử trong nước (xô, ~1 m)
+
+**FEC (tùy chọn, lệnh `e` trên board, `S.fec = true` trong `run_tx.m`):** mã chập K = 7, R = 1/2 (133/171), xen kẽ khối 112 × 16, Viterbi quyết định cứng trên PS. 111 byte tin → 224 byte mã, 106 byte văn bản/khung (~1,66 kbit/s). MATLAB: `ofdm_fec_frame.m`, `ofdm_fec_unframe.m`, `ofdm_fec_payloads.m`.
+
+**Công cụ đo (MATLAB):**
+
+| File | Việc |
+|---|---|
+| `rx_log.m` | Điều khiển board qua COM (thay Tera Term): `g` thu và ghi CSV/log, `d` dump băng gốc, `m` theo dõi tone |
+| `ofdm_channel_report.m` | Từ file dump: SNR từng sóng mang, đáp ứng tần số, trễ đa đường, độ ổn định kênh |
+| `test_a1.m`, `test_a1b.m` | Thử dự trữ công suất: quét biên độ phát và `gain_shift`, có/không FEC |
+
+**Kết quả (10/11/2026, xô, test mode, 99 khung mỗi mức):**
+
+- `gain_shift 4` cắt (bão hòa 16 bit trong `i2s_ch_sel`) khi đỉnh ADC > −24 dBFS (ngưỡng = −6·gain_shift dBFS). Ở biên độ phát 0,9: gain 4 → 1/99 khung đúng, gain 3 → 99/99 (29 bit kênh sai/khung), gain 2 → 99/99 (0,3 bit/khung). Phía phát (Focusrite, bộ khuếch đại, đầu dò) vẫn tuyến tính ở 0,9.
+- Giới hạn dưới (gain 4): có FEC 99/99 tới biên độ 0,005 (−45 dB so với 0,9), 94/99 ở 0,003 (−49,5 dB). Không FEC: ≥ 96 % tới 0,012 (−37,5 dB), 78 % ở 0,008, 19 % ở 0,005.
+- Lợi ích FEC ở ngưỡng 90 % khung đúng: ≥ 11 dB (gồm 3 dB do tốc độ mã 1/2). FEC còn sửa được các khung lỗi lẻ tẻ 1–50 bit do nhiễu xung.
+- Ở mức thấp nhất, bộ dò bắt nhầm (rmin 3000) bắt đầu làm mất khung: đồng bộ thành giới hạn cùng với BER.
+
+Cấu hình khuyến nghị hiện tại: FEC bật, `gain_shift` 2 khi biên độ phát ≥ 0,35 (hoặc giữ gain 4 và biên độ ≤ 0,25), `thr` 180, `rmin` ≈ 200000·(amp/0,9)²·4^(gain−4).

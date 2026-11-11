@@ -1,0 +1,309 @@
+--- 2026-11-09 16:24:14  lenh k ---
+k
+test mode off (MATLAB run_tx.m: S.mode = 'test')
+--- 2026-11-09 16:24:14  lenh + ---
++
+gain_shift 1  (rmin -> 8136)
+--- 2026-11-09 16:24:15  lenh + ---
++
+gain_shift 2  (rmin -> 32544)
+--- 2026-11-09 16:24:15  lenh + ---
++
+gain_shift 3  (rmin -> 130176)
+--- 2026-11-09 16:24:16  lenh + ---
++
+gain_shift 4  (rmin -> 520704)
+--- 2026-11-09 16:24:16  lenh s ---
+s
+sync frames 0, demap frames 0, I2S drops 0, last CFO +0.00 Hz
+gain_shift 4  ch L  sync_en 0  thr 150 (0.59)  toffs 0  bb_shift 2  rmin 520704  test 0
+--- 2026-11-09 16:24:19  lenh n ---
+n
+Noise: rms 0.0 LSB, peak 0, R_noise 0 -> rmin = 64 (8x)
+--- 2026-11-09 16:24:35  lenh l ---
+l
+Tone: |bb| 0 LSB (peak 0), ADC ~ -240.0 dBFS (+/-3 dB), offset +0.00 Hz (+0 ppm)
+  MATLAB scales the OFDM peak to S.amp exactly like the tone: the OFDM peak will
+  sit at this level. Use the SAME S.amp for 'text'. Aim: -10 .. -2 dBFS.
+  -> weak: raise Focusrite level / S.amp or '+' gain_shift
+--- 2026-11-09 16:26:35  lenh l ---
+l
+Tone: |bb| 0 LSB (peak 0), ADC ~ -240.0 dBFS (+/-3 dB), offset +0.00 Hz (+0 ppm)
+  MATLAB scales the OFDM peak to S.amp exactly like the tone: the OFDM peak will
+  sit at this level. Use the SAME S.amp for 'text'. Aim: -10 .. -2 dBFS.
+  -> weak: raise Focusrite level / S.amp or '+' gain_shift
+--- 2026-11-09 16:26:44  lenh l ---
+l
+Tone: |bb| 0 LSB (peak 0), ADC ~ -240.0 dBFS (+/-3 dB), offset +0.00 Hz (+0 ppm)
+  MATLAB scales the OFDM peak to S.amp exactly like the tone: the OFDM peak will
+  sit at this level. Use the SAME S.amp for 'text'. Aim: -10 .. -2 dBFS.
+  -> weak: raise Focusrite level / S.amp or '+' gain_shift
+--- 2026-11-09 16:33:34  lenh l ---
+l
+Tone: |bb| 0 LSB (peak 0), ADC ~ -240.0 dBFS (+/-3 dB), offset +0.00 Hz (+0 ppm)
+  MATLAB scales the OFDM peak to S.amp exactly like the tone: the OFDM peak will
+  sit at this level. Use the SAME S.amp for 'text'. Aim: -10 .. -2 dBFS.
+  -> weak: raise Focusrite level / S.amp or '+' gain_shift
+--- 2026-11-09 16:58:37  lenh l ---
+l
+Tone: |bb| 11 LSB (peak 30), ADC ~ -75.7 dBFS (+/-3 dB), offset -2971.31 Hz (-90040 ppm)
+  MATLAB scales the OFDM peak to S.amp exactly like the tone: the OFDM peak will
+  sit at this level. Use the SAME S.amp for 'text'. Aim: -10 .. -2 dBFS.
+  -> weak: raise Focusrite level / S.amp or '+' gain_shift
+  !! offset > 30 Hz: tone not at 33 kHz or sample-rate mismatch (Focusrite at 96 kHz?)
+--- 2026-11-09 16:59:02  lenh l ---
+l
+Tone: |bb| 1079 LSB (peak 1130), ADC ~ -35.7 dBFS (+/-3 dB), offset -0.08 Hz (-2 ppm)
+  MATLAB scales the OFDM peak to S.amp exactly like the tone: the OFDM peak will
+  sit at this level. Use the SAME S.amp for 'text'. Aim: -10 .. -2 dBFS.
+  -> level OK
+--- 2026-11-09 17:02:31  lenh l ---
+l
+Tone: |bb| 383 LSB (peak 1293), ADC ~ -44.7 dBFS (+/-3 dB), offset -791.91 Hz (-23997 ppm)
+  MATLAB scales the OFDM peak to S.amp exactly like the tone: the OFDM peak will
+  sit at this level. Use the SAME S.amp for 'text'. Aim: -10 .. -2 dBFS.
+  -> level OK
+  !! offset > 30 Hz: tone not at 33 kHz or sample-rate mismatch (Focusrite at 96 kHz?)
+--- 2026-11-09 17:03:16  lenh l ---
+l
+Tone: |bb| 1087 LSB (peak 1126), ADC ~ -35.6 dBFS (+/-3 dB), offset +0.10 Hz (+3 ppm)
+  MATLAB scales the OFDM peak to S.amp exactly like the tone: the OFDM peak will
+  sit at this level. Use the SAME S.amp for 'text'. Aim: -10 .. -2 dBFS.
+  -> level OK
+--- 2026-11-09 17:03:39  lenh + ---
++
+gain_shift 6  (rmin -> 4294967280)
+--- 2026-11-09 17:03:45  lenh l ---
+l
+Tone: |bb| 2136 LSB (peak 2218), ADC ~ -35.8 dBFS (+/-3 dB), offset +0.14 Hz (+4 ppm)
+  MATLAB scales the OFDM peak to S.amp exactly like the tone: the OFDM peak will
+  sit at this level. Use the SAME S.amp for 'text'. Aim: -10 .. -2 dBFS.
+  -> too hot: clipping risk (ADC or gain_shift). Lower Focusrite level / S.amp or '-'
+--- 2026-11-09 17:03:55  lenh - ---
+-
+gain_shift 5  (rmin -> 1073741820)
+--- 2026-11-09 17:04:27  lenh k ---
+k
+test mode ON (MATLAB run_tx.m: S.mode = 'test')
+--- 2026-11-09 17:04:29  lenh n ---
+n
+Noise: rms 37.8 LSB, peak 80, R_noise 183224 -> rmin = 1465791 (8x)
+--- 2026-11-09 17:14:33  lenh - ---
+-
+gain_shift 4  (rmin -> 366447)
+--- 2026-11-09 17:14:48  lenh n ---
+n
+Noise: rms 6.8 LSB, peak 22, R_noise 5974 -> rmin = 47789 (8x)
+--- 2026-11-09 17:47:28  lenh k ---
+k
+test mode ON (MATLAB run_tx.m: S.mode = 'test')
+--- 2026-11-09 17:47:28  lenh e ---
+e
+FEC ON (MATLAB run_tx.m: S.fec = true)
+--- 2026-11-09 17:47:29  lenh + ---
++
+gain_shift 1  (rmin -> 4000)
+--- 2026-11-09 17:47:29  lenh + ---
++
+gain_shift 2  (rmin -> 16000)
+--- 2026-11-09 17:47:30  lenh + ---
++
+gain_shift 3  (rmin -> 64000)
+--- 2026-11-09 17:47:30  lenh + ---
++
+gain_shift 4  (rmin -> 256000)
+--- 2026-11-09 17:47:31  lenh s ---
+s
+sync frames 0, demap frames 0, I2S drops 0, last CFO +0.00 Hz
+gain_shift 4  ch L  sync_en 0  thr 150 (0.59)  toffs 0  bb_shift 2  rmin 256000  test 1  fec 1
+--- 2026-11-09 17:47:33  lenh n ---
+n
+Noise: rms 2.2 LSB, peak 14, R_noise 613 -> rmin = 4905 (8x)
+--- 2026-11-09 18:37:20  lenh r ---
+rmin [4905]: 200000
+--- 2026-11-09 18:37:21  lenh t ---
+thr (1/256, e.g. 150) [150]: 180
+--- 2026-11-09 18:37:21  lenh s ---
+s
+sync frames 200, demap frames 200, I2S drops 0, last CFO +12.75 Hz
+gain_shift 4  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 200000  test 1  fec 1
+--- 2026-11-09 18:44:55  lenh r ---
+rmin [200000]: 200000
+--- 2026-11-09 18:44:56  lenh t ---
+thr (1/256, e.g. 150) [180]: 180
+--- 2026-11-09 18:44:56  lenh s ---
+s
+sync frames 200, demap frames 200, I2S drops 0, last CFO +12.75 Hz
+gain_shift 4  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 200000  test 1  fec 1
+--- 2026-11-09 18:50:52  lenh r ---
+
+--- 2026-11-09 18:50:53  lenh t ---
+thr (1/256, e.g. 150) [180]: 180
+--- 2026-11-09 18:50:53  lenh s ---
+s
+sync frames 293, demap frames 293, I2S drops 0, last CFO +0.33 Hz
+gain_shift 4  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 200000  test 1  fec 1
+--- 2026-11-10 18:39:26  lenh s ---
+s
+sync frames 0, demap frames 0, I2S drops 0, last CFO +0.00 Hz
+gain_shift 4  ch L  sync_en 0  thr 150 (0.59)  toffs 0  bb_shift 2  rmin 512256  test 0  fec 0
+--- 2026-11-10 18:39:26  lenh k ---
+k
+test mode ON (MATLAB run_tx.m: S.mode = 'test')
+--- 2026-11-10 18:39:27  lenh t ---
+thr (1/256, e.g. 150) [150]: 180
+--- 2026-11-10 18:39:28  lenh e ---
+e
+FEC ON (MATLAB run_tx.m: S.fec = true)
+--- 2026-11-10 18:39:28  lenh r ---
+rmin [512256]: 200000
+--- 2026-11-10 18:39:53  lenh s ---
+stopped: 0 OK, 13 CRC errors | detected 13, demapped 13, I2S drops 0
+test: 860 bit errors / 11232 bits, BER 7.66e-02, frames with errors 13 of 13
+fec: 1810 channel bit errors corrected / 23296 coded bits, channel BER 7.77e-02
+--- 2026-11-10 18:39:53  lenh s ---
+s
+sync frames 13, demap frames 13, I2S drops 0, last CFO -0.07 Hz
+gain_shift 4  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 200000  test 1  fec 1
+--- 2026-11-10 18:39:54  lenh t ---
+thr (1/256, e.g. 150) [180]: 180
+--- 2026-11-10 18:39:54  lenh r ---
+rmin [200000]: 200000
+--- 2026-11-10 18:40:49  lenh r ---
+rmin [200000]: 120988
+--- 2026-11-10 18:41:44  lenh r ---
+rmin [120988]: 61728
+--- 2026-11-10 18:42:39  lenh r ---
+rmin [61728]: 30247
+--- 2026-11-10 18:43:34  lenh r ---
+rmin [30247]: 20000
+--- 2026-11-10 18:44:29  lenh r ---
+rmin [20000]: 20000
+--- 2026-11-10 18:45:23  lenh r ---
+rmin [20000]: 20000
+--- 2026-11-10 18:46:18  lenh r ---
+rmin [20000]: 20000
+--- 2026-11-10 18:47:13  lenh r ---
+rmin [20000]: 20000
+--- 2026-11-10 18:48:08  lenh e ---
+e
+FEC off (MATLAB run_tx.m: S.fec = true)
+--- 2026-11-10 18:48:08  lenh r ---
+rmin [20000]: 200000
+--- 2026-11-10 18:49:03  lenh r ---
+rmin [200000]: 120988
+--- 2026-11-10 18:49:58  lenh r ---
+rmin [120988]: 61728
+--- 2026-11-10 18:50:53  lenh r ---
+rmin [61728]: 30247
+--- 2026-11-10 18:51:48  lenh r ---
+rmin [30247]: 20000
+--- 2026-11-10 20:20:30  lenh s ---
+
+--- 2026-11-10 20:21:25  lenh s ---
+s
+sync frames 0, demap frames 0, I2S drops 0, last CFO +0.00 Hz
+gain_shift 0  ch L  sync_en 0  thr 150 (0.59)  toffs 0  bb_shift 2  rmin 1000  test 0  fec 0
+--- 2026-11-10 20:21:26  lenh k ---
+k
+test mode ON (MATLAB run_tx.m: S.mode = 'test')
+--- 2026-11-10 20:21:26  lenh t ---
+thr (1/256, e.g. 150) [150]: 180
+--- 2026-11-10 20:21:27  lenh e ---
+e
+FEC ON (MATLAB run_tx.m: S.fec = true)
+--- 2026-11-10 20:21:27  lenh + ---
++
+gain_shift 1  (rmin -> 4000)
+--- 2026-11-10 20:21:28  lenh + ---
++
+gain_shift 2  (rmin -> 16000)
+--- 2026-11-10 20:21:28  lenh + ---
++
+gain_shift 3  (rmin -> 64000)
+--- 2026-11-10 20:21:29  lenh + ---
++
+gain_shift 4  (rmin -> 256000)
+--- 2026-11-10 20:21:29  lenh r ---
+rmin [256000]: 200000
+--- 2026-11-10 20:22:24  lenh - ---
+-
+gain_shift 3  (rmin -> 50000)
+--- 2026-11-10 20:22:25  lenh r ---
+rmin [50000]: 50000
+--- 2026-11-10 20:23:20  lenh - ---
+-
+gain_shift 2  (rmin -> 12500)
+--- 2026-11-10 20:23:20  lenh r ---
+rmin [12500]: 12500
+--- 2026-11-10 20:24:15  lenh - ---
+-
+gain_shift 1  (rmin -> 3125)
+--- 2026-11-10 20:24:16  lenh r ---
+rmin [3125]: 3125
+--- 2026-11-10 20:25:11  lenh + ---
++
+gain_shift 2  (rmin -> 12500)
+--- 2026-11-10 20:25:11  lenh + ---
++
+gain_shift 3  (rmin -> 50000)
+--- 2026-11-10 20:25:12  lenh + ---
++
+gain_shift 4  (rmin -> 200000)
+--- 2026-11-10 20:25:12  lenh r ---
+rmin [200000]: 61728
+--- 2026-11-10 20:26:07  lenh - ---
+-
+gain_shift 3  (rmin -> 15432)
+--- 2026-11-10 20:26:07  lenh r ---
+rmin [15432]: 15432
+--- 2026-11-10 20:27:02  lenh - ---
+-
+gain_shift 2  (rmin -> 3858)
+--- 2026-11-10 20:27:03  lenh r ---
+rmin [3858]: 3858
+--- 2026-11-10 20:27:58  lenh - ---
+-
+gain_shift 1  (rmin -> 964)
+--- 2026-11-10 20:27:58  lenh r ---
+rmin [964]: 3000
+--- 2026-11-10 20:28:53  lenh + ---
++
+gain_shift 2  (rmin -> 12000)
+--- 2026-11-10 20:28:54  lenh + ---
++
+gain_shift 3  (rmin -> 48000)
+--- 2026-11-10 20:28:54  lenh + ---
++
+gain_shift 4  (rmin -> 192000)
+--- 2026-11-10 20:28:55  lenh r ---
+rmin [192000]: 3000
+--- 2026-11-10 20:29:50  lenh r ---
+rmin [3000]: 3000
+--- 2026-11-10 20:30:44  lenh r ---
+rmin [3000]: 3000
+--- 2026-11-10 20:31:39  lenh r ---
+rmin [3000]: 3000
+--- 2026-11-10 20:32:34  lenh r ---
+rmin [3000]: 3000
+--- 2026-11-10 20:33:29  lenh r ---
+rmin [3000]: 3000
+--- 2026-11-10 20:34:24  lenh r ---
+rmin [3000]: 3000
+--- 2026-11-10 20:35:19  lenh e ---
+e
+FEC off (MATLAB run_tx.m: S.fec = true)
+--- 2026-11-10 20:35:20  lenh r ---
+rmin [3000]: 3000
+--- 2026-11-10 20:36:14  lenh r ---
+rmin [3000]: 3000
+--- 2026-11-10 20:37:09  lenh r ---
+rmin [3000]: 3000
+--- 2026-11-10 20:38:04  lenh r ---
+rmin [3000]: 3000
+--- 2026-11-10 20:38:59  lenh r ---
+rmin [3000]: 3000
+--- 2026-11-10 20:39:54  lenh r ---
+rmin [3000]: 3000
+--- 2026-11-10 20:40:49  lenh r ---
+rmin [3000]: 3000
