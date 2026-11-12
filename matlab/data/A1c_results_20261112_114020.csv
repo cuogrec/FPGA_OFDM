@@ -1,0 +1,15 @@
+mode,amp,amp_db,gain,rmin,expected,detected,junk,real,ok,ok_pct,ch_ber,raw_mean,raw_max,file
+fec,0.0500,-25.1,2,200,100,99,15,84,84,84.0,0,0.00,0,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261112_112734_g_A1c_fec_amp0050_g2.csv
+fec,0.0300,-29.5,2,200,100,99,27,72,72,72.0,0,0.00,0,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261112_112828_g_A1c_fec_amp0030_g2.csv
+fec,0.0200,-33.1,2,200,100,99,32,67,67,67.0,0,0.00,0,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261112_112923_g_A1c_fec_amp0020_g2.csv
+fec,0.0120,-37.5,2,200,100,99,16,83,83,83.0,0.000134,0.24,3,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261112_113018_g_A1c_fec_amp0012_g2.csv
+fec,0.0080,-41.0,2,200,100,99,25,74,74,74.0,0.00521,9.34,42,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261112_113113_g_A1c_fec_amp0008_g2.csv
+fec,0.0050,-45.1,2,200,100,99,16,83,69,69.0,0.0425,76.18,136,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261112_113208_g_A1c_fec_amp0005_g2.csv
+fec,0.0030,-49.5,2,200,100,99,33,66,0,0.0,0.0993,177.86,200,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261112_113302_g_A1c_fec_amp0003_g2.csv
+nofec,0.0500,-25.1,2,200,100,99,46,53,53,53.0,0,0.00,0,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261112_113358_g_A1c_nofec_amp0050_g2.csv
+nofec,0.0300,-29.5,2,200,100,99,57,42,42,42.0,0,0.00,0,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261112_113453_g_A1c_nofec_amp0030_g2.csv
+nofec,0.0200,-33.1,2,200,100,99,59,40,39,39.0,1.41e-05,0.03,1,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261112_113547_g_A1c_nofec_amp0020_g2.csv
+nofec,0.0120,-37.5,2,200,100,99,30,69,44,44.0,0.000352,0.62,7,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261112_113642_g_A1c_nofec_amp0012_g2.csv
+nofec,0.0080,-41.0,2,200,100,99,23,76,1,1.0,0.00807,14.28,41,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261112_113737_g_A1c_nofec_amp0008_g2.csv
+nofec,0.0050,-45.1,2,200,100,99,18,81,0,0.0,0.05,88.46,133,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261112_113832_g_A1c_nofec_amp0005_g2.csv
+nofec,0.0030,-49.5,2,200,100,100,79,21,0,0.0,0.103,182.14,200,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261112_113927_g_A1c_nofec_amp0003_g2.csv

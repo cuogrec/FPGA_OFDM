@@ -1,0 +1,9 @@
+s
+sync frames 424, demap frames 424, I2S drops 0, last CFO +0.31 Hz
+gain_shift 2  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 3858  test 1  fec 1
+> g
+Receiving... (any key = stop)  rmin 3858  gain_shift 2  TEST MODE
+FEC ON (rate 1/2, Viterbi)
+F,t_ms,seq,crc_ok,cfo_hz,bit_err,bytes,raw_err
+stopped: 0 OK, 0 CRC errors | detected 0, demapped 0, I2S drops 0
+> 

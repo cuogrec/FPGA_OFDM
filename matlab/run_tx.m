@@ -8,7 +8,7 @@ clear; clc;
 P = ofdm_params();
 
 %% ---------------- THIET LAP (sua o day) ----------------
-S.mode        = 'test';        % 'text' van ban | 'test' khung thu (dem bit loi) | 'tone' | 'sweep'
+S.mode        = 'text';        % 'text' van ban | 'test' khung thu (dem bit loi) | 'tone' | 'sweep'
 S.fec         = true;         % true = ma chap 1/2 + xen ke (board: lenh e). Van ban 106 byte/khung
 S.test_frames = 50;            % so khung moi lan phat o che do 'test' (seq 0..49, toi da 256)
 S.text        = 'Hello ZCU104! Thu nghiem OFDM thuy am 33 kHz.';
@@ -28,7 +28,7 @@ S.device      = 'Scarlett';   % chuoi tim trong ten thiet bi (regexp, khong phan
 S.driver      = '';            % '' = mac dinh; 'ASIO' neu dung Audio Toolbox + Focusrite ASIO
 S.use_toolbox = true;          % dung audioDeviceWriter neu co Audio Toolbox
 S.out_ch      = 1;             % 1 = Output 1, 2 = Output 2, 0 = ca hai
-S.loop        = Inf;             % so lan phat lai file (Inf = lien tuc, Ctrl+C de dung)
+S.loop        = 1;             % so lan phat lai file (Inf = lien tuc, Ctrl+C de dung)
 
 S.selftest    = true;          % giai lai tin hieu vua tao (co nhieu + da duong) truoc khi phat
 S.selftest_snr= 30;            % dB (kenh 4 tia khac nghiet; chua co FEC nen 1 bit loi = CRC loi)
