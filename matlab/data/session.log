@@ -364,3 +364,117 @@ rmin [200]: 200
 --- 2026-11-12 11:40:20  lenh e ---
 e
 FEC ON (MATLAB run_tx.m: S.fec = true)
+--- 2026-11-12 12:52:59  lenh s ---
+s
+sync frames 0, demap frames 0, I2S drops 0, last CFO +0.00 Hz
+gain_shift 2  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 4000  test 0  fec 1  agc 1
+--- 2026-11-12 12:52:59  lenh k ---
+k
+test mode ON (MATLAB run_tx.m: S.mode = 'test')
+--- 2026-11-12 12:53:00  lenh t ---
+thr (1/256, e.g. 150) [180]: 180
+--- 2026-11-12 12:53:00  lenh s ---
+s
+sync frames 0, demap frames 0, I2S drops 0, last CFO +0.00 Hz
+gain_shift 2  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 4000  test 1  fec 1  agc 1
+--- 2026-11-12 12:53:56  lenh s ---
+s
+sync frames 100, demap frames 100, I2S drops 0, last CFO +0.12 Hz
+gain_shift 1  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 347007  test 1  fec 1  agc 1
+--- 2026-11-12 12:54:52  lenh s ---
+s
+sync frames 200, demap frames 200, I2S drops 0, last CFO +0.14 Hz
+gain_shift 0  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 274879  test 1  fec 1  agc 1
+--- 2026-11-12 12:55:48  lenh s ---
+s
+sync frames 300, demap frames 300, I2S drops 0, last CFO +0.03 Hz
+gain_shift 1  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 83844  test 1  fec 1  agc 1
+--- 2026-11-12 12:56:43  lenh s ---
+s
+sync frames 400, demap frames 400, I2S drops 0, last CFO +0.16 Hz
+gain_shift 2  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 78916  test 1  fec 1  agc 1
+--- 2026-11-12 12:57:39  lenh s ---
+s
+sync frames 500, demap frames 500, I2S drops 0, last CFO +0.09 Hz
+gain_shift 3  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 54859  test 1  fec 1  agc 1
+--- 2026-11-12 12:58:35  lenh s ---
+s
+sync frames 600, demap frames 600, I2S drops 0, last CFO -0.05 Hz
+gain_shift 5  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 284298  test 1  fec 1  agc 1
+--- 2026-11-12 12:59:31  lenh s ---
+s
+sync frames 700, demap frames 700, I2S drops 0, last CFO +0.20 Hz
+gain_shift 6  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 171644  test 1  fec 1  agc 1
+--- 2026-11-12 13:00:26  lenh s ---
+s
+sync frames 800, demap frames 800, I2S drops 0, last CFO +0.14 Hz
+gain_shift 6  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 380364  test 1  fec 1  agc 1
+--- 2026-11-12 13:01:22  lenh s ---
+s
+sync frames 871, demap frames 871, I2S drops 0, last CFO -0.16 Hz
+gain_shift 6  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 3610770  test 1  fec 1  agc 1
+--- 2026-11-12 13:02:18  lenh s ---
+s
+sync frames 971, demap frames 971, I2S drops 0, last CFO +0.02 Hz
+gain_shift 0  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 276569  test 1  fec 1  agc 1
+--- 2026-11-12 13:03:13  lenh s ---
+s
+sync frames 1070, demap frames 1070, I2S drops 0, last CFO +0.13 Hz
+gain_shift 3  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 57086  test 1  fec 1  agc 1
+--- 2026-11-12 13:11:33  lenh s ---
+s
+sync frames 0, demap frames 0, I2S drops 0, last CFO +0.00 Hz
+gain_shift 2  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 4000  test 0  fec 1  agc 1
+--- 2026-11-12 13:11:34  lenh k ---
+k
+test mode ON (MATLAB run_tx.m: S.mode = 'test')
+--- 2026-11-12 13:11:34  lenh t ---
+thr (1/256, e.g. 150) [180]: 180
+--- 2026-11-12 13:11:35  lenh s ---
+s
+sync frames 0, demap frames 0, I2S drops 0, last CFO +0.00 Hz
+gain_shift 2  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 4000  test 1  fec 1  agc 1
+--- 2026-11-12 13:12:31  lenh s ---
+s
+sync frames 100, demap frames 100, I2S drops 0, last CFO +0.47 Hz
+gain_shift 1  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 259277  test 1  fec 1  agc 1
+--- 2026-11-12 13:13:26  lenh s ---
+s
+sync frames 200, demap frames 200, I2S drops 0, last CFO +0.47 Hz
+gain_shift 0  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 210841  test 1  fec 1  agc 1
+--- 2026-11-12 13:14:22  lenh s ---
+s
+sync frames 300, demap frames 300, I2S drops 0, last CFO +0.47 Hz
+gain_shift 1  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 63748  test 1  fec 1  agc 1
+--- 2026-11-12 13:15:18  lenh s ---
+s
+sync frames 400, demap frames 400, I2S drops 0, last CFO +0.45 Hz
+gain_shift 2  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 59500  test 1  fec 1  agc 1
+--- 2026-11-12 13:16:14  lenh s ---
+s
+sync frames 500, demap frames 500, I2S drops 0, last CFO +0.47 Hz
+gain_shift 4  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 166416  test 1  fec 1  agc 1
+--- 2026-11-12 13:17:10  lenh s ---
+s
+sync frames 600, demap frames 600, I2S drops 0, last CFO +0.50 Hz
+gain_shift 5  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 119812  test 1  fec 1  agc 1
+--- 2026-11-12 13:18:05  lenh s ---
+s
+sync frames 700, demap frames 700, I2S drops 0, last CFO +0.47 Hz
+gain_shift 6  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 793064  test 1  fec 1  agc 1
+--- 2026-11-12 13:19:01  lenh s ---
+s
+sync frames 800, demap frames 800, I2S drops 0, last CFO +0.74 Hz
+gain_shift 6  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 53779  test 1  fec 1  agc 1
+--- 2026-11-12 13:19:57  lenh s ---
+s
+sync frames 900, demap frames 900, I2S drops 0, last CFO +0.39 Hz
+gain_shift 6  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 50398  test 1  fec 1  agc 1
+--- 2026-11-12 13:20:53  lenh s ---
+s
+sync frames 1000, demap frames 1000, I2S drops 0, last CFO +0.47 Hz
+gain_shift 0  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 208382  test 1  fec 1  agc 1
+--- 2026-11-12 13:21:48  lenh s ---
+s
+sync frames 1099, demap frames 1099, I2S drops 0, last CFO +0.47 Hz
+gain_shift 4  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 161176  test 1  fec 1  agc 1

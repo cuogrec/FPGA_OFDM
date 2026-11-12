@@ -98,6 +98,8 @@ Sửa ngày 29/10: `ofdm_qpsk_demap` không còn ngoại suy pilot ở mép băn
 | `rx_log.m` | Điều khiển board qua COM (thay Tera Term): `g` thu và ghi CSV/log, `d` dump băng gốc, `m` theo dõi tone |
 | `ofdm_channel_report.m` | Từ file dump: SNR từng sóng mang, đáp ứng tần số, trễ đa đường, độ ổn định kênh |
 | `test_a1.m`, `test_a1b.m` | Thử dự trữ công suất: quét biên độ phát và `gain_shift`, có/không FEC |
+| `test_s2.m` | Một buổi đo: báo động giả (A2), chạy dài 1000 khung (A3), đáy ở gain 2 (A1c) |
+| `test_agc.m` | Kiểm tự động mức (app rev 3): quét biên độ mà không gửi lệnh gain hay rmin |
 
 **Kết quả (10/11/2026, xô, test mode, 99 khung mỗi mức):**
 
@@ -106,4 +108,41 @@ Sửa ngày 29/10: `ofdm_qpsk_demap` không còn ngoại suy pilot ở mép băn
 - Lợi ích FEC ở ngưỡng 90 % khung đúng: ≥ 11 dB (gồm 3 dB do tốc độ mã 1/2). FEC còn sửa được các khung lỗi lẻ tẻ 1–50 bit do nhiễu xung.
 - Ở mức thấp nhất, bộ dò bắt nhầm (rmin 3000) bắt đầu làm mất khung: đồng bộ thành giới hạn cùng với BER.
 
-Cấu hình khuyến nghị hiện tại: FEC bật, `gain_shift` 2 khi biên độ phát ≥ 0,35 (hoặc giữ gain 4 và biên độ ≤ 0,25), `thr` 180, `rmin` ≈ 200000·(amp/0,9)²·4^(gain−4).
+**Kết quả (12/11/2026, xô, `test_s2.m`, gain_shift 2):**
+
+- Báo động giả (A2): không phát, bộ khuếch đại bật, rmin 3858, thr 180 → 0 khung trong 5 phút.
+- Chạy dài (A3): 1000/1000 khung FEC đúng ở amp 0,5; 0 bit kênh sai trên 1 792 000 bit; CFO 0,17–0,30 Hz; không mất mẫu I2S.
+- Văn bản nhiều khung (A4): 4 khung (khoảng 325 byte) ghép đúng `>>> message complete`. Ở amp 0,9 với gain 4, mỗi khung phải sửa 104–136 bit và một khung luôn hỏng; về gain 2 thì hết.
+- Đáy ở gain 2 (A1c): khung thật vẫn 0 bit sai tới amp 0,012 (−37,5 dB), 9 bit sửa/khung ở 0,008, 76 ở 0,005 (69/83 khung đúng), hỏng hẳn ở 0,003. Cùng mức đó ở gain 4 chỉ 0,8 / 1,6 / 11,5 bit. Gain 2 kém gain 4 khoảng 8–10 dB ở đáy vì lượng tử hóa 16 bit.
+- Trong A1c, sàn rmin 200 quá thấp: 15–60 % số lần bắt là bắt nhầm trong khoảng nghỉ (CFO lệch tới ±8 Hz, lệch nhịp 510 ms), mỗi lần làm mất một khung thật. Tỉ lệ khung đúng của A1c vì thế phản ánh bộ dò, không phản ánh giải mã.
+
+Kết luận: không có một gain_shift cố định nào dùng được cho cả dải. Gain 4 bão hòa từ amp 0,35 trở lên, gain 2 mất khoảng 8–10 dB ở đáy. Cần AGC (tự chọn gain_shift theo đỉnh đo được) và rmin tự động có sàn theo nhiễu nền; đây là việc tiếp theo.
+
+**App rev 3 (12/11/2026):** tự động mức (lệnh `a`, mặc định bật: AGC chọn `gain_shift`, `rmin` tự đặt theo mức đo được) và tự nhận FEC theo từng khung. Chi tiết trong `sw/README_SW.md`.
+
+**Kết quả tự động mức (12/11/2026, xô, `test_agc.m`, không gửi lệnh gain hay rmin nào):**
+
+| Biên độ phát | gain_shift app chọn | Khung đúng (FEC) | Bit kênh sửa TB |
+|---|---|---|---|
+| 0,5 | 1 | 99/99 | 0 |
+| 0,9 | 0 | 99/99 | 0 |
+| 0,25 | 1 | 99/99 | 0 |
+| 0,12 | 2 | 99/99 | 0 |
+| 0,05 | 3 | 99/99 | 0 |
+| 0,02 | 5 | 99/99 | 0 |
+| 0,008 | 6 | 99/99 | 0 |
+| 0,005 | 6 | 99/99 | 0,01 |
+| 0,003 | 6 | 70/99 | 3,8 |
+| 0,9 (nhảy từ gain 6) | 0 | 96/99 | 4,4 |
+| 0,05 (nhảy từ gain 0) | 3 | 98/98 | 0 |
+
+- Từ 0,9 xuống 0,005 (45 dB) không mất khung nào và gần như không còn bit kênh sai, kể cả ở các mức mà gain cố định từng bão hòa (A1) hoặc thiếu độ phân giải (A1c).
+- Ngưỡng bão hòa đo được khớp hằng số 2048: đỉnh không cắt tới 1712, đỉnh khi bão hòa 2400–3200 với hệ số đỉnh 1,3–2,3 (bình thường 2,9–3,1).
+- Bản 3 mất 29 khung ở 0,003 (rmin bị đặt theo luật "im lặng" khi SNR thấp) và 3 khung khi nhảy từ gain 6 về 0,9.
+
+**Đo lại với bản 3.1 (cùng ngày):** 0,5 → 0,02: 99/99 ở mọi mức; 0,008: 98/99; 0,005: 95/99; 0,003: 96/99 (3 khung hỏng do SNR, 49–65 bit sai); nhảy về 0,9: 98/99 (gain 6 → 2 → 0); nhảy về 0,05: 98/98.
+
+- Phần mất còn lại ở 0,008 và 0,005 là do bắt nhầm (1 và 4 lần, CFO lệch, lệch nhịp): mỗi lần bắt nhầm chiếm bộ dò 360 ms và làm mất một khung thật. Bản 3.2 giữ rmin cao hơn ở tín hiệu yếu (chưa đo); sửa tận gốc cần khoảng chờ sau mỗi khung trong `ofdm_sync_sc` (chặng 3).
+- Kết luận chặng 1: không cần chỉnh tay trên dải 45 dB (0,9 → 0,005) với ≥ 95 % khung đúng, 100 % từ 0,02 trở lên.
+
+Cấu hình khuyến nghị hiện tại: FEC bật, `gain_shift` 2 khi biên độ phát ≥ 0,35, gain 4 khi biên độ ≤ 0,25, `thr` 180, `rmin` ≈ 200000·(amp/0,9)²·4^(gain−4).
