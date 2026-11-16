@@ -6,7 +6,7 @@
 |---|---|
 | ADC | PCM1808, fs = 96 kHz, chế độ slave, I2S 24 bit (MD1 MD0 = 00, FMT = 0) |
 | SCKI | 24.576 MHz = 256·fs (MMCM D=9, M=88.75, O=40.125 → lệch −0.9 ppm) |
-| Sóng mang | 33 kHz (cộng hưởng BII-7511H) |
+| Sóng mang | 33 kHz (cộng hưởng transducer BII-7511H) |
 | Băng tần chiếm | 31 – 35 kHz (64 subcarrier × 62.5 Hz) |
 | Baseband | phức 8 kHz (fs/12) |
 | FFT / CP | N = 128 (16 ms), CP = 32 (4 ms) |
