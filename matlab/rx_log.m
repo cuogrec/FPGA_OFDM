@@ -76,6 +76,7 @@ switch cmd
         [io, L] = wait_prompt(io, 5);
         sm = parse_summary(L);
         out.rows = rows;  out.summary = sm;
+        out.raw = io.raw;                               % toan bo text tu board (vd dong '>>> message complete')
         csvf = [base '.csv'];
         write_rows(csvf, 't_ms,seq,crc_ok,cfo_hz,bit_err,bytes,raw_err', rows, ...
                    '%.0f,%.0f,%.0f,%.2f,%.0f,%.0f,%.0f');
@@ -282,7 +283,8 @@ fprintf('Da luu %s (%d dong)\n', f, size(rows, 1));
 end
 
 function save_text(f, txt)
-fid = fopen_chk(f, 'w');  fwrite(fid, txt, 'char');  fclose(fid);
+% ghi dung tung byte nhan tu board (UTF-8 giu nguyen, khong ma hoa lai)
+fid = fopen_chk(f, 'w');  fwrite(fid, uint8(double(txt)), 'uint8');  fclose(fid);
 end
 
 function m = mean_or_nan(rows, c)

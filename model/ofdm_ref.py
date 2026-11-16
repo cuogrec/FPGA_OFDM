@@ -52,13 +52,15 @@ def ofdm_symbol(X):             # X: dict f -> value
 def qpsk_map(b):                # Gray: b0 -> I sign, b1 -> Q sign
     return ((1 - 2 * b[0::2]) + 1j * (1 - 2 * b[1::2])) / np.sqrt(2)
 
-def build_frame(bits):
+def build_frame(bits, ltf_rep=0):
     assert len(bits) == BITS_PER_FRAME
     even = [f for f in ACTIVE if f % 2 == 0]
     sc = qpsk_map(SC_QPSK[:2 * len(even)]) * np.sqrt(2)
     syms = [ofdm_symbol(dict(zip(even, sc))), ofdm_symbol(dict(zip(ACTIVE, LTF)))]
     q = qpsk_map(bits).reshape(NSYM, len(DATA))
     for s in range(NSYM):
+        if ltf_rep and s and s % ltf_rep == 0:      # repeated LTF (rev 3)
+            syms.append(ofdm_symbol(dict(zip(ACTIVE, LTF))))
         X = dict(zip(DATA, q[s])); X.update({p: 1.0 for p in PILOTS})
         syms.append(ofdm_symbol(X))
     return np.concatenate(syms)          # complex baseband @ 8 kHz

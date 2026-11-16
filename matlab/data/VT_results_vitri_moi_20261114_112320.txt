@@ -1,0 +1,9 @@
+Vi tri: vitri_moi   (2026-11-14 11:23)
+V0 im lang 20 s     : 0 bat nham, nhieu nen dinh -62.7 dBFS
+V1 amp 0,3          : 100/100 khung dung (100%, chuan 100%), bat nham 0, bit sua TB 21.8 (chuan 2.1) max 34, ADC -21.7 dBFS (chuan -20.9), gain 1
+V2 kenh (dump)      : SNR 10.4 dB (chuan 17.4), song mang yeu nhat 0.0 dB o 33.69 kHz, gon |H| 27.4 dB, tre -20 dB 4.75 ms (CP 4 ms), rho 0.991
+V3 amp 0,9          : 100/100 khung dung (100%, chuan 100%), bat nham 0, bit sua TB 22.6 (chuan 2.1) max 38, ADC -12.7 dBFS (chuan -11.4), gain 0
+V4 van ban x3       : 3/3 khung OK, 3/3 ban tin ghep xong
+
+CHAN DOAN
+* Tre da duong 4.8 ms > CP 4 ms (vang tu mat nuoc / thanh xo) -> dua dau do xa mat nuoc va thanh xo, ve giua do sau.

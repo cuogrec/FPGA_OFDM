@@ -11,15 +11,19 @@ P = ofdm_params();
 S.mode        = 'text';        % 'text' van ban | 'test' khung thu (dem bit loi) | 'tone' | 'sweep'
 S.fec         = true;         % true = ma chap 1/2 + xen ke (board: lenh e). Van ban 106 byte/khung
 S.test_frames = 50;            % so khung moi lan phat o che do 'test' (seq 0..49, toi da 256)
-S.text        = 'Hello ZCU104! Thu nghiem OFDM thuy am 33 kHz.';
-S.repeat      = 5;             % so lan lap lai toan bo ban tin
-S.gap_ms      = 150;           % khoang lang giua cac khung (cho tieng vang tat dan)
+S.text        = 'Hello ZCU104! Thu nghiem OFDM thuy am 33khz. Co nhung moi quan he ket thuc khong phai vi het yeu ma vi yeu den dau cung khong the co 1 cai ket . Dau nhat la luc phai tu tay buong nguoi minh van con thuong vo cung trong khi trai tim minh van con dang van xin duoc o lai . Minh biet cham dut la dung nhung trong long cua minh';
+S.repeat      = 3;             % so lan lap lai toan bo ban tin
+S.ltf_rep     = 0;             % chen lai LTF sau moi N symbol du lieu: 0 = khong (khung cu), 4 hoac 8.
+                               % Board PHAI dat cung gia tri (lenh f, bitstream rev 3). Dung khi nuoc dong / di chuyen
+S.gap_ms      = 50;            % khoang lang giua cac khung (ms). A8 12/11: 150/50/20 deu 100% trong xo;
+                               % 50 ms -> 2,07 kbit/s chu co FEC. Moi truong lon tieng vang dai: tra ve 150
 S.preroll_ms  = 300;           % im lang dau file (card am thanh khoi dong)
 S.amp         = 0.9;           % bien do dinh (0..1 full scale). Tang dan neu thu yeu
 S.papr_clip_db= Inf;           % cat dinh baseband, vd 8 (dB tren RMS); Inf = tat
 S.fc          = P.fc;          % song mang - FPGA co dinh 33 kHz, chi doi de thu nghiem
 S.tone_s      = 10;            % thoi luong che do 'tone' / 'sweep' (s)
 S.sweep_hz    = [25000 41000]; % dai quet cho 'sweep'
+P = ofdm_params(S.ltf_rep);    % khung theo S.ltf_rep (ltf_rep = 0: giong het khung cu)
 
 S.save_wav    = true;
 S.wav_file    = 'ofdm_tx.wav';

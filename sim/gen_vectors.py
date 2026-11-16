@@ -5,11 +5,15 @@ sys.path.insert(0, '../model'); import ofdm_ref as M
 rng = np.random.default_rng(int(sys.argv[1]) if len(sys.argv) > 1 else 1)
 snr_db = float(sys.argv[2]) if len(sys.argv) > 2 else 25
 ppm    = float(sys.argv[3]) if len(sys.argv) > 3 else 40     # TX/RX clock mismatch
-nfr = 3
+tone_db = float(sys.argv[4]) if len(sys.argv) > 4 and sys.argv[4] != 'none' else None  # tone 32 kHz, dB re signal rms
+gap     = int(sys.argv[5]) if len(sys.argv) > 5 else 400        # samples between frames (400 = 50 ms)
+nfr     = int(sys.argv[6]) if len(sys.argv) > 6 else 3
+ltf_rep = int(sys.argv[7]) if len(sys.argv) > 7 else 0        # extra LTF every ltf_rep data symbols
+fade    = float(sys.argv[8]) if len(sys.argv) > 8 else 0      # time-varying channel: 2nd path phase rate, Hz
 frames, bits_all = [], []
 for f in range(nfr):
     b = rng.integers(0, 2, M.BITS_PER_FRAME); bits_all.append(b)
-    frames.append(np.concatenate([M.build_frame(b), np.zeros(400)]))   # 50 ms gap
+    frames.append(np.concatenate([M.build_frame(b, ltf_rep), np.zeros(gap)]))
 bb = np.concatenate([np.zeros(777)] + frames)
 tx = M.upconvert(bb)
 # clock mismatch: resample by (1+ppm)
@@ -18,8 +22,14 @@ tx = ss.resample(tx, int(round(len(tx) / (1 + ppm * 1e-6))))     # band-limited 
 # bucket channel: direct + reflections (ms-scale)
 h = np.zeros(200); h[0] = 1; h[37] = 0.5; h[90] = -0.3; h[150] = 0.15   # up to 1.56 ms
 rx = np.convolve(tx, h)[:len(tx)]
+if fade:                                                        # reflections swing (stirred water)
+    tt = np.arange(len(tx)) / M.FS
+    h0 = np.zeros(200); h0[0] = 1
+    rx = np.convolve(tx, h0)[:len(tx)] + np.cos(2 * np.pi * fade * tt + 0.5) * np.convolve(tx, h - h0)[:len(tx)]
 p = np.mean(rx[np.abs(rx) > 0] ** 2)
 rx = rx + rng.normal(0, np.sqrt(p / 10 ** (snr_db / 10) * (M.FS / 2) / 2000), len(rx))  # SNR in 4 kHz band
+if tone_db is not None:                                         # narrow-band interferer
+    rx = rx + np.sqrt(2 * p) * 10 ** (tone_db / 20) * np.sin(2 * np.pi * 32000 / M.FS * np.arange(len(rx)) + 0.7)
 adc = np.round(rx / np.max(np.abs(rx)) * 0.5 * 2**23).astype(np.int64)        # 24-bit, -6 dBFS
 # i2s_ch_sel (gain 0): top 16 bits
 x16 = adc >> 8

@@ -25,7 +25,7 @@ T.port       = 'COM6';
 T.note       = 'xo';
 
 P  = ofdm_params();
-Tf = (P.N + P.CP) * (P.NSYM + 2) / P.fsb + 0.150;
+Tf = (P.N + P.CP) * P.frame_syms / P.fsb + 0.150;
 rmin_of = @(amp) round(max(T.rmin_ref * (amp / 0.9)^2 * 4^(T.gain - 4), T.rmin_floor));
 
 %% ---------------- CHUAN BI BOARD ----------------

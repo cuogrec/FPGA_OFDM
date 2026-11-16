@@ -31,7 +31,7 @@ T.port       = 'COM6';
 T.note       = 'xo';
 
 P  = ofdm_params();
-Tf = (P.N + P.CP) * (P.NSYM + 2) / P.fsb + 0.150;
+Tf = (P.N + P.CP) * P.frame_syms / P.fsb + 0.150;
 expct = floor(T.secs / Tf);                  % so khung toi da thu duoc trong T.secs
 
 %% ---------------- CHUAN BI BOARD ----------------

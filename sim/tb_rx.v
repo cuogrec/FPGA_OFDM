@@ -32,6 +32,15 @@ module tb_rx;
     end
 
     // ---------------- sync ----------------
+    reg [3:0] ltf_tb = 0; reg nb_off_tb = 0; reg [7:0] thr_tb = 8'd150; reg [31:0] rmin_tb = 32'd1000;
+    integer pa_tmp;
+    initial begin
+        if ($test$plusargs("nb_off")) nb_off_tb = 1;
+        if ($value$plusargs("ltf=%d", pa_tmp)) ltf_tb = pa_tmp;
+        if ($value$plusargs("thr=%d", pa_tmp)) thr_tb = pa_tmp;
+        if ($value$plusargs("rmin=%d", pa_tmp)) rmin_tb = pa_tmp;
+        $display("nb_off=%0d thr=%0d rmin=%0d", nb_off_tb, thr_tb, rmin_tb);
+    end
     wire [31:0] cfo_d; wire cfo_v; reg cfo_r = 1;
     reg  [31:0] phi_d; reg phi_v = 0; wire phi_r;
     wire [31:0] cart_d; wire cart_l, cart_v; wire [15:0] ph_d; wire ph_v;
@@ -39,7 +48,7 @@ module tb_rx;
     wire [15:0] fcnt, cfop;
     ofdm_sync_sc u_sync (.aclk(clk), .aresetn(rstn),
         .s_axis_tdata(bb_d), .s_axis_tvalid(bb_v), .s_axis_tready(),
-        .enable(1'b1), .thr(8'd150), .rmin(32'd1000), .toffs(8'd0), .bb_shift(3'd2),
+        .enable(1'b1), .thr(thr_tb), .rmin(rmin_tb), .toffs(8'd0), .bb_shift(3'd2), .nb_off(nb_off_tb), .ltf_rep(ltf_tb),
         .m_axis_cfo_tdata(cfo_d), .m_axis_cfo_tvalid(cfo_v), .m_axis_cfo_tready(cfo_r),
         .s_axis_phi_tdata(phi_d), .s_axis_phi_tvalid(phi_v), .s_axis_phi_tready(phi_r),
         .m_axis_cart_tdata(cart_d), .m_axis_cart_tlast(cart_l), .m_axis_cart_tvalid(cart_v),
@@ -92,7 +101,7 @@ module tb_rx;
 
     // ---------------- eq_ctrl ----------------
     wire [31:0] a_d, b_d; wire [7:0] a_u; wire a_l, a_v, b_v; reg a_r, b_r; wire [4:0] shv;
-    ofdm_eq_ctrl u_eq (.aclk(clk), .aresetn(rstn),
+    ofdm_eq_ctrl u_eq (.aclk(clk), .aresetn(rstn), .ltf_rep(ltf_tb),
         .s_axis_tdata(fo_d), .s_axis_tuser(fo_u), .s_axis_tlast(fo_l), .s_axis_tvalid(fo_v),
         .s_axis_tready(fo_r),
         .m_axis_a_tdata(a_d), .m_axis_a_tuser(a_u), .m_axis_a_tlast(a_l), .m_axis_a_tvalid(a_v),

@@ -1,0 +1,10 @@
+chong nhieu BAT, tone -12 dB:  60/ 60 khung dung (100.0%), bat nham 0, bit sua TB 41.7
+chong nhieu BAT, tone  -6 dB:  60/ 60 khung dung (100.0%), bat nham 0, bit sua TB 38.2
+chong nhieu BAT, tone  -3 dB:  60/ 60 khung dung (100.0%), bat nham 0, bit sua TB 48.4
+chong nhieu BAT, tone  +0 dB:  59/ 59 khung dung (100.0%), bat nham 1, bit sua TB 41.5
+chong nhieu BAT, CHI tone -6 dB trong 40 s: 0 khung bat nham
+chong nhieu TAT, tone -12 dB:  59/ 60 khung dung ( 98.3%), bat nham 0, bit sua TB 44.5
+chong nhieu TAT, tone  -6 dB:  60/ 60 khung dung (100.0%), bat nham 0, bit sua TB 40.0
+chong nhieu TAT, tone  -3 dB:  60/ 60 khung dung (100.0%), bat nham 0, bit sua TB 46.9
+chong nhieu TAT, tone  +0 dB:  59/ 60 khung dung ( 98.3%), bat nham 0, bit sua TB 42.7
+chong nhieu TAT, CHI tone -6 dB trong 40 s: 0 khung bat nham

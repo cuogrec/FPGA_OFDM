@@ -25,7 +25,7 @@ T.port          = 'COM6';
 T.note          = 'xo';      % ghi chu vao runs.csv
 
 P  = ofdm_params();
-Tf = (P.N + P.CP) * (P.NSYM + 2) / P.fsb + 0.150;      % chu ky khung (s), gap 150 ms
+Tf = (P.N + P.CP) * P.frame_syms / P.fsb + 0.150;      % chu ky khung (s), gap 150 ms
 
 %% ---------------- CHUAN BI BOARD ----------------
 st = board_status(T.port);

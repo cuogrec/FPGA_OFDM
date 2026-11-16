@@ -1,0 +1,4 @@
+t_ms,seq,crc_ok,cfo_hz,bit_err,bytes,raw_err
+1955,0,1,-0.14,NaN,224,NaN
+2365,0,1,-0.16,NaN,224,NaN
+2775,0,1,-0.12,NaN,224,NaN

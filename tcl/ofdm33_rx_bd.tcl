@@ -366,6 +366,7 @@ connect_bd_intf_net [get_bd_intf_pins fifo_raw/M_AXIS]  [get_bd_intf_pins dma_ra
 # 10. Control / status GPIO
 #   gpio_cfg  ch1: [3:0] gain_shift [4] ch_sel [5] sync_en [6] tap_en
 #                  [15:8] thr  [23:16] toffs (signed)  [26:24] bb_shift
+#                  [27] nb_off (1 = no narrow-band rejection in u_sync)
 #             ch2: rmin
 #   gpio_stat ch1: [15:0] sync frames  [31:16] CFO phase (2^13 = pi)
 #             ch2: [15:0] demap frames [31:16] I2S drop count
@@ -396,7 +397,9 @@ slice sl_tapen  6  6
 slice sl_thr   15  8
 slice sl_toffs 23 16
 slice sl_bbsh  26 24
-foreach s {sl_gain sl_chsel sl_synen sl_tapen sl_thr sl_toffs sl_bbsh} {
+slice sl_nboff 27 27
+slice sl_ltf 31 28
+foreach s {sl_gain sl_chsel sl_synen sl_tapen sl_thr sl_toffs sl_bbsh sl_nboff sl_ltf} {
     connect_bd_net [get_bd_pins gpio_cfg/gpio_io_o] [get_bd_pins $s/Din]
 }
 connect_bd_net [get_bd_pins sl_gain/Dout]  [get_bd_pins u_chsel/gain_shift]
@@ -406,6 +409,8 @@ connect_bd_net [get_bd_pins sl_tapen/Dout] [get_bd_pins u_tap/enable]
 connect_bd_net [get_bd_pins sl_thr/Dout]   [get_bd_pins u_sync/thr]
 connect_bd_net [get_bd_pins sl_toffs/Dout] [get_bd_pins u_sync/toffs]
 connect_bd_net [get_bd_pins sl_bbsh/Dout]  [get_bd_pins u_sync/bb_shift]
+connect_bd_net [get_bd_pins sl_nboff/Dout] [get_bd_pins u_sync/nb_off]
+connect_bd_net [get_bd_pins sl_ltf/Dout] [get_bd_pins u_sync/ltf_rep] [get_bd_pins u_eq/ltf_rep]
 connect_bd_net [get_bd_pins gpio_cfg/gpio2_io_o] [get_bd_pins u_sync/rmin]
 
 set cc1 [mkip xlconcat st_cat1]

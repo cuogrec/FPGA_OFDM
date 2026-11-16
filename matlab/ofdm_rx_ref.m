@@ -52,9 +52,9 @@ while d <= nd
     end
     if d - d1 > 4*CP + 2*L, while d <= nd && above(d), d = d + 1; end, continue; end
     n0  = floor((d1 + d2)/2) + CP/4 + toffs;          % cua so FFT cua preamble
-    if n0 + SL*(P.NSYM+2) - 1 > nr, break; end
+    if n0 + SL*P.frame_syms - 1 > nr, break; end
     phi = angle(Pd(ib));                               % = pi * eps
-    nn  = (0:SL*(P.NSYM+2)-1).';
+    nn  = (0:SL*P.frame_syms-1).';
     seg = r(n0 + nn) .* exp(-1j * phi / L * nn);        % bu CFO
 
     Y   = @(s) fft(seg(s*SL + (1:N)));                % s = 1: LTF, 2..: data
@@ -62,8 +62,13 @@ while d <= nd
     Yl  = Y(1);  H = zeros(N,1);  H(ia) = Yl(ia) .* P.ltf(:);
     bits = zeros(P.bits_per_frame, 1);  Zf = [];  pil = zeros(numel(P.pilots), P.NSYM);
     ip  = mod(P.pilots, N) + 1;
+    si = 1;                                            % chi so symbol trong khung (1 = LTF dau)
     for s = 1:P.NSYM
-        Ys = Y(s+1);  Z = Ys .* conj(H);
+        if P.ltf_rep > 0 && s > 1 && mod(s - 1, P.ltf_rep) == 0   % LTF lap: uoc luong lai kenh
+            si = si + 1;  Yl = Y(si);  H(ia) = Yl(ia) .* P.ltf(:);
+        end
+        si = si + 1;
+        Ys = Y(si);  Z = Ys .* conj(H);
         zp = Z(mod(P.pilots, N) + 1);                  % pilot
         pil(:, s) = Ys(ip) ./ H(ip);
         C  = zeros(N,1);
@@ -91,7 +96,7 @@ while d <= nd
     t.pil    = pil;
     res(k) = orderfields(t, res);
     Zall = [Zall; Zf]; %#ok<AGROW>
-    d = n0 + SL*(P.NSYM+2) - SL;                       % tiep tuc sau khung
+    d = n0 + SL*P.frame_syms - SL;                       % tiep tuc sau khung
 end
 if doplot && ~isempty(Zall)
     figure; subplot(1,2,1); plot(M); hold on; plot([1 nd], thr*[1 1], 'r--');

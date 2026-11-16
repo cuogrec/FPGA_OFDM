@@ -16,6 +16,15 @@
  *    + / -  gain_shift up / down      t  threshold   o  timing offset
  *    b  bb_shift                      c  ADC channel L/R     r  rmin
  *
+ *  Rev 3.6 (14/11/2026):
+ *    * compact display in 'g' (default; 'v' toggles verbose): one short line per
+ *      frame without the text, '#' info lines hidden (CLIP warning kept), the
+ *      assembled message printed once between separator lines; a repeat of the
+ *      same message only prints '>>> message repeated (k)'.
+ *    * AGC: the slow gain increase during silence (gain < 2) is skipped when the
+ *      last frame would then come within 8 dB of full scale (it clipped the first
+ *      frame of the next transmission).
+ *
  *  Rev 3 (12/11/2026):
  *    * auto level ('a', on after reset): while 'g' runs, the raw tap is captured
  *      back to back (4096 samples = 0.512 s). From every packet:
@@ -26,7 +35,7 @@
  *          frame (in the gap).
  *        - rmin: Rn = quietest 128-sample window, Rs = 75th percentile window.
  *          frame present (Rs >= 2 Rn): rmin = max(sqrt(Rn Rs), Rs / 32, min(16 Rn, Rs / 6))
- *          silence                   : rmin = 6 Rs;  never below RMIN_FLOOR.
+ *          silence                   : rmin = 6 Rs (nb off) or 1.1 Rn (nb on); never below RMIN_FLOOR.
  *      A manual '+', '-', 'r' or 'n' switches auto level off (old scripts work).
  *    * FEC is detected per frame: the CRC is tried the way 'e' says first, then
  *      the other way. 'e' only sets what is tried first / counted in test mode.
@@ -132,13 +141,16 @@ static struct {
     unsigned test;      /* 1 = frames carry the known test payload */
     unsigned fec;       /* 1 = FEC coded frames expected (tried first)  */
     unsigned agc;       /* 1 = auto level: gain_shift + rmin follow the signal */
-} S = { 2, 0, 1, 0, 180, 0, 2, 4000, 0, 1, 1 };
+    unsigned nboff;     /* 1 = narrow-band (lag-32) rejection in ofdm_sync_sc off */
+    unsigned ltf;       /* rev 3.5: extra LTF after every 'ltf' data symbols (0 = none); needs bitstream rev 3 */
+    unsigned verbose;   /* rev 3.6: 1 = print text and '#' info lines in 'g' (0 = compact display) */
+} S = { 2, 0, 1, 0, 180, 0, 2, 4000, 0, 1, 1, 0, 0, 0 };
 
 static void cfg_write(void)
 {
     u32 v = (S.gain & 15) | ((S.ch & 1) << 4) | ((S.sync_en & 1) << 5) |
             ((S.tap_en & 1) << 6) | ((S.thr & 255) << 8) |
-            (((u32)S.toffs & 255) << 16) | ((S.bbsh & 7) << 24);
+            (((u32)S.toffs & 255) << 16) | ((S.bbsh & 7) << 24) | ((S.nboff & 1u) << 27) | ((S.ltf & 15u) << 28);
     Xil_Out32(GPIO_CFG + GPIO_DATA, v);
     Xil_Out32(GPIO_CFG + GPIO2_DATA, S.rmin);
 }
@@ -394,9 +406,9 @@ static void cmd_status(void)
     printf("sync frames %lu, demap frames %lu, I2S drops %lu, last CFO %+.2f Hz\r\n",
            (unsigned long)(s1 & 0xFFFF), (unsigned long)(s2 & 0xFFFF),
            (unsigned long)(s2 >> 16), ph / 8192.0 * DF);
-    printf("gain_shift %u  ch %c  sync_en %u  thr %u (%.2f)  toffs %d  bb_shift %u  rmin %lu  test %u  fec %u  agc %u\r\n",
+    printf("gain_shift %u  ch %c  sync_en %u  thr %u (%.2f)  toffs %d  bb_shift %u  rmin %lu  test %u  fec %u  agc %u  nb %u  ltf %u  verbose %u\r\n",
            S.gain, S.ch ? 'R' : 'L', S.sync_en, S.thr, S.thr / 256.0, S.toffs, S.bbsh,
-           (unsigned long)S.rmin, S.test, S.fec, S.agc);
+           (unsigned long)S.rmin, S.test, S.fec, S.agc, S.nboff ? 0u : 1u, S.ltf, S.verbose);
 }
 
 /* ---------------- auto level: AGC + rmin from the raw tap ------------------
@@ -462,7 +474,14 @@ static u32 rmin_target(const lvl_t *L)
         t = sqrt(L->rn * L->rs);
         if (t < L->rs / 32.0) t = L->rs / 32.0;
         if (t < lo) t = lo;
-    } else t = 6.0 * L->rs;
+    } else if (S.nboff) {
+        t = 6.0 * L->rs;               /* old bitstream / rejection off: rmin alone blocks the gap */
+    } else {
+        /* rejection on (bitstream rev 2): a tone / DC / hum in the gap can no longer trigger,
+         * so rmin only has to sit above the quietest window. This keeps frames detectable
+         * when a strong tone (rs < 2 rn) or a very weak signal makes the packet look silent. */
+        t = 1.1 * L->rn;
+    }
     if (t < RMIN_FLOOR) t = RMIN_FLOOR;
     return rmin_sat(t);
 }
@@ -478,8 +497,10 @@ static u32 rmin_target(const lvl_t *L)
  *            1 LSB at a very low gain is found again. */
 #define AGC_QUIET_PKTS 20
 #define AGC_GAIN_IDLE  2u
+static double agc_pk0 = 0;      /* peak of the last packet with a frame, scaled to gain_shift 0 */
 static int agc_step(const lvl_t *L, unsigned gain, int *c)
 {
+    if (L->present) agc_pk0 = L->pk / (double)(1u << gain);
     if (L->n_clip >= LVL_NSAMP) {                 /* crest < 1.6: far into saturation -> 4 steps */
         int d = (L->present && L->crest < LVL_CREST_HARD) ? 4 : 2;
         c[0] = c[1] = c[2] = 0;
@@ -495,7 +516,11 @@ static int agc_step(const lvl_t *L, unsigned gain, int *c)
     c[0] = 0;
     if (!L->present) {
         c[1] = 0;
-        if (++c[2] >= AGC_QUIET_PKTS) { c[2] = 0; return gain < AGC_GAIN_IDLE ? 1 : 0; }
+        if (++c[2] >= AGC_QUIET_PKTS) {
+            c[2] = 0;
+            /* only if the last frame stays below LVL_HI after the step (else the next one clips) */
+            return (gain < AGC_GAIN_IDLE && agc_pk0 * (double)(1u << (gain + 1)) < LVL_HI) ? 1 : 0;
+        }
         return 0;
     }
     c[2] = 0;
@@ -618,6 +643,8 @@ static int frame_decode(const u8 *d, int expect_fec, u8 *p, int *is_fec, int *nr
 static void cmd_run(void)
 {
     static u8 seg[256][220]; static u8 seglen[256]; static u8 have[256];
+    static u8 msg_cur[256 * 220], msg_last[256 * 220];
+    int msg_last_len = -1, msg_rep = 0;
     int nok = 0, nbad = 0, nfr_msg = 0;
     unsigned long berr = 0, bits = 0, rawerr = 0, rawbits = 0, t0 = now_ms();
     /* level monitor / auto level state */
@@ -638,7 +665,8 @@ static void cmd_run(void)
     printf("Receiving... (any key = stop)  rmin %lu  gain_shift %u%s\r\n",
            (unsigned long)S.rmin, S.gain, S.test ? "  TEST MODE" : "");
     if (S.fec) printf("FEC ON (rate 1/2, Viterbi)\r\n");
-    if (S.agc) printf("# auto level ON: gain_shift and rmin follow the signal ('a' = off)\r\n");
+    if (S.agc && S.verbose) printf("# auto level ON: gain_shift and rmin follow the signal ('a' = off)\r\n");
+    if (!S.test && !S.verbose) printf("(compact display: 'v' in the menu shows text per frame and AGC info)\r\n");
     if (S.test) printf("F,t_ms,seq,crc_ok,cfo_hz,bit_err,bytes,raw_err\r\n");
     dma_arm(DMA_BITS, bits_buf, FRAME_BYTES);
     dma_arm(DMA_RAW, raw_buf, RAW_PKT * 4);             /* arm before enabling the tap */
@@ -674,7 +702,7 @@ static void cmd_run(void)
                             u32 t = rmin_target(&L);
                             /* up only on a 2x change, down already on 1.3x: a too high rmin loses frames */
                             if ((double)t > 2.0 * (double)S.rmin || 1.3 * (double)t < (double)S.rmin) {
-                                printf("# rmin %lu to %lu (%s)\r\n", (unsigned long)S.rmin, (unsigned long)t,
+                                if (S.verbose) printf("# rmin %lu to %lu (%s)\r\n", (unsigned long)S.rmin, (unsigned long)t,
                                        L.present ? "frame" : "silence");
                                 S.rmin = t; cfg_write();
                             }
@@ -712,18 +740,37 @@ static void cmd_run(void)
                 printf("F,%lu,%u,%d,%+.2f,%d,%lu,%d\r\n", tf, p[0], ok, ph / 8192.0 * DF, e,
                        (unsigned long)got, nraw >= 0 ? nraw : e);
             } else {
-                printf("[%s] t %7lu ms seq %3u/%u len %3d CFO %+6.2f Hz  bytes %lu  \"%s\"",
-                       ok ? "OK " : "BAD", tf, p[0], p[1], len, ph / 8192.0 * DF, (unsigned long)got,
-                       ok ? txt : "");
+                if (S.verbose)
+                    printf("[%s] t %7lu ms seq %3u/%u len %3d CFO %+6.2f Hz  bytes %lu  \"%s\"",
+                           ok ? "OK " : "BAD", tf, p[0], p[1], len, ph / 8192.0 * DF, (unsigned long)got,
+                           ok ? txt : "");
+                else                                         /* same fields (rx_log.m parses them), no text */
+                    printf("[%s] t %lu ms seq %u/%u len %d CFO %+.2f Hz bytes %lu",
+                           ok ? "OK " : "BAD", tf, p[0], ok ? p[1] : 0, ok ? len : 0, ph / 8192.0 * DF,
+                           (unsigned long)got);
                 if (nraw >= 0) printf("  fixed %d", nraw);
                 if (ok && is_fec != (int)S.fec) printf("  (%s frame)", is_fec ? "FEC" : "uncoded");
                 printf("\r\n");
                 if (ok && p[1] > 0 && p[0] < p[1]) {        /* assemble multi-frame text */
                     if (!have[p[0]]) { have[p[0]] = 1; memcpy(seg[p[0]], &p[3], len); seglen[p[0]] = (u8)len; nfr_msg++; }
                     if (nfr_msg >= p[1]) {
-                        printf(">>> message complete (%d frames): ", p[1]);
-                        for (int f = 0; f < p[1]; f++) { seg[f][seglen[f]] = 0; printf("%s", (char *)seg[f]); }
-                        printf("\r\n");
+                        /* message = concatenated segments; compare with the last one printed */
+                        int mlen = 0, same;
+                        for (int f = 0; f < p[1]; f++) {
+                            if (mlen + seglen[f] > (int)sizeof msg_cur) break;
+                            memcpy(&msg_cur[mlen], seg[f], seglen[f]); mlen += seglen[f];
+                        }
+                        same = (mlen == msg_last_len && memcmp(msg_cur, msg_last, (size_t)mlen) == 0);
+                        if (same && !S.verbose) {
+                            printf(">>> message repeated (%d), same as above\r\n", ++msg_rep);
+                        } else {
+                            if (!S.verbose) printf("------------------------------------------------------------\r\n");
+                            printf(">>> message complete (%d frames): ", p[1]);
+                            for (int k = 0; k < mlen; k++) putchar(msg_cur[k]);
+                            printf("\r\n");
+                            if (!S.verbose) printf("------------------------------------------------------------\r\n");
+                            memcpy(msg_last, msg_cur, (size_t)mlen); msg_last_len = mlen; msg_rep = 1;
+                        }
                         memset(have, 0, sizeof have); nfr_msg = 0;
                     }
                 }
@@ -735,7 +782,7 @@ static void cmd_run(void)
             if (g > (int)AGC_GAIN_MAX) g = (int)AGC_GAIN_MAX;
             double f = (g >= (int)S.gain) ? (double)(1u << (2 * (g - (int)S.gain)))
                                           : 1.0 / (double)(1u << (2 * ((int)S.gain - g)));
-            printf("# AGC gain_shift %u to %d (peak %.0f of %.0f, crest %.1f)\r\n", S.gain, g, pend_pk, LVL_FS, pend_cr);
+            if (S.verbose) printf("# AGC gain_shift %u to %d (peak %.0f of %.0f, crest %.1f)\r\n", S.gain, g, pend_pk, LVL_FS, pend_cr);
             f *= (double)S.rmin;
             S.rmin = rmin_sat(f < RMIN_FLOOR ? RMIN_FLOOR : f);
             S.gain = (unsigned)g; cfg_write();
@@ -767,6 +814,9 @@ static void help(void)
            " m monitor tone (level + frequency, one CSV line per 0.5 s)\r\n"
            " k test mode (known payload, bit-error count in 'g')   e FEC on/off\r\n"
            " a auto level (AGC: gain_shift + rmin follow the signal; '+' '-' 'r' 'n' switch it off)\r\n"
+           " p narrow-band rejection on/off (needs bitstream rev 2: tone / DC in the gap no longer triggers)\r\n"
+           " f LTF repeat: extra LTF every N data symbols (0 = off, 4 or 8; needs bitstream rev 3, TX must match)\r\n"
+           " v display in 'g': compact (default) / verbose (text per frame, AGC info)\r\n"
            " g receive frames    +/- gain_shift   t thr   r rmin   o toffs   b bb_shift   c L/R\r\n"
            " (frame detector runs only inside 'g'; counters are printed when 'g' stops)\r\n");
 }
@@ -782,7 +832,7 @@ static void agc_manual(const char *cmd)
 int main(void)
 {
     Xil_DCacheEnable();
-    printf("\r\n\r\nOFDM33 RX app rev 3.2 (" __DATE__ " " __TIME__ ")  (I2S 0x%08lx, DMA bits 0x%08lx raw 0x%08lx, GPIO 0x%08lx/0x%08lx)\r\n",
+    printf("\r\n\r\nOFDM33 RX app rev 3.6 (" __DATE__ " " __TIME__ ")  (I2S 0x%08lx, DMA bits 0x%08lx raw 0x%08lx, GPIO 0x%08lx/0x%08lx)\r\n",
            (unsigned long)I2S_BASE, (unsigned long)DMA_BITS, (unsigned long)DMA_RAW,
            (unsigned long)GPIO_CFG, (unsigned long)GPIO_STAT);
     make_whiten();
@@ -810,6 +860,12 @@ int main(void)
             case '-': if (S.gain > 0)  { S.gain--; S.rmin = rmin_sat(S.rmin / 4.0); }
                       cfg_write(); printf("gain_shift %u  (rmin -> %lu)\r\n", S.gain, (unsigned long)S.rmin);
                       agc_manual("-"); break;
+            case 'p': S.nboff ^= 1u; cfg_write();
+                      printf("narrow-band rejection %s (bitstream rev 2 or later)\r\n", S.nboff ? "off" : "ON"); break;
+            case 'f': S.ltf = (unsigned)read_int("LTF repeat period (0 = off, 4, 8)", (int)S.ltf) & 15u; cfg_write();
+                      printf("LTF repeat %u (bitstream rev 3 or later; transmitter must use the same value)\r\n", S.ltf); break;
+            case 'v': S.verbose ^= 1u;
+                      printf("display in 'g': %s\r\n", S.verbose ? "VERBOSE (text per frame, AGC/rmin info)" : "compact"); break;
             case 'a': S.agc ^= 1u;
                       printf("auto level %s (AGC + rmin from the measured level while 'g' runs)\r\n", S.agc ? "ON" : "off"); break;
             case 't': S.thr = (unsigned)read_int("thr (1/256, e.g. 150)", S.thr) & 255; cfg_write(); break;

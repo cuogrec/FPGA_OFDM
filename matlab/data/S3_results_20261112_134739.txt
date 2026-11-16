@@ -1,0 +1,5 @@
+A4 van ban: 33/33 khung dung, 3 ban tin ghep xong, 3 trung tung byte -> DAT
+A8 nghi 150 ms: 100/100 khung dung (100%), mat 0, bat nham 0, bit sua TB 4.0 max 7 -> DAT
+A8 nghi  50 ms: 100/100 khung dung (100%), mat 0, bat nham 0, bit sua TB 4.0 max 8 -> DAT
+A8 nghi  20 ms: 100/100 khung dung (100%), mat 0, bat nham 0, bit sua TB 4.1 max 8 -> DAT
+A9 dap ung: dinh 31750 Hz (lech -1250 Hz so voi 33 kHz), bang -3 dB 31500-31750 Hz, muc 31 kHz -11.7 dB, 35 kHz -31.1 dB so voi dinh (CANH BAO: muc tone sat nguong cat, giam T.a9_amp)

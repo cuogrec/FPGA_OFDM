@@ -2,7 +2,8 @@
 // ofdm_eq_ctrl : LTF channel estimation + operand feeder for the equalizer cmpy
 //
 //  Input  : FFT output (unscaled, 24-bit re/im, natural order), 128 bins/symbol,
-//           NSYM+1 symbols per frame (symbol 0 = LTF).
+//           NSYM data symbols per frame, an LTF first and (rev 3) again after
+//           every ltf_rep data symbols (ltf_rep = 0: only the first).
 //  LTF    : H[k] = Y[k] * X_ltf[k]  (X_ltf = +/-1, BPSK)  for the 64 active bins
 //           common shift sh chosen so max|H| < 2^14 (16-bit operands)
 //  Data   : for each active bin emit A = Y>>sh (16b) and B = conj(H>>sh) (16b)
@@ -23,6 +24,7 @@ module ofdm_eq_ctrl #(
     (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 aresetn RST" *)
     (* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_LOW" *)
     input  wire        aresetn,
+    input  wire [3:0]  ltf_rep,          // rev 3: extra LTF after every ltf_rep data symbols (0 = none)
     input  wire [47:0] s_axis_tdata,     // re [23:0], im [47:24]
     input  wire [7:0]  s_axis_tuser,     // xk_index
     input  wire        s_axis_tlast,
@@ -39,7 +41,10 @@ module ofdm_eq_ctrl #(
     output reg  [4:0]  dbg_shift
 );
     reg [47:0] H [0:63];
-    reg [7:0]  sym;          // 0 = LTF
+    reg        is_ltf;       // current symbol is an LTF (first symbol of a frame, or a repeated one)
+    reg [7:0]  dcnt;         // data symbols completed in this frame
+    reg [3:0]  mcnt;         // data symbols since the last LTF
+    reg [3:0]  Mq;           // ltf_rep latched on the first LTF of the frame
     reg [23:0] maxabs;
     reg [4:0]  sh;
 
@@ -72,18 +77,18 @@ module ofdm_eq_ctrl #(
 
     always @(posedge aclk) begin
         if (!aresetn) begin
-            st <= S_IN; s_axis_tready <= 1'b1; sym <= 0; maxabs <= 0; sh <= 0;
+            st <= S_IN; s_axis_tready <= 1'b1; is_ltf <= 1'b1; dcnt <= 0; mcnt <= 0; Mq <= 0; maxabs <= 0; sh <= 0;
             m_axis_a_tvalid <= 1'b0; m_axis_b_tvalid <= 1'b0; dbg_shift <= 0;
         end else case (st)
             S_IN: if (s_axis_tvalid) begin
-                    if (sym == 0) begin
+                    if (is_ltf) begin
                         if (act) begin
                             H[ai] <= neg ? {-yi, -yr} : {yi, yr};
                             if (mabs > maxabs) maxabs <= mabs;
                         end
                     end else if (act) begin
                         m_axis_a_tdata  <= {sat16(yi, sh), sat16(yr, sh)};
-                        m_axis_a_tuser  <= {(sym == NSYM), 1'b0, ai[5:0]};
+                        m_axis_a_tuser  <= {(dcnt == NSYM-1), 1'b0, ai[5:0]};
                         m_axis_a_tlast  <= (ai == 7'd63);
                         m_axis_b_tdata  <= {sat16(-hi, sh), sat16(hr, sh)};   // conj(H)
                         m_axis_a_tvalid <= 1'b1;
@@ -93,13 +98,19 @@ module ofdm_eq_ctrl #(
                     end
                     // bin / symbol bookkeeping
                     if (s_axis_tlast) begin
-                        if (sym == 0) begin
+                        if (is_ltf) begin
                             // shift so that max < 2^14 : sh = max(0, msb-13)
                             sh <= (msb(maxabs) > 13) ? msb(maxabs) - 5'd13 : 5'd0;
                             dbg_shift <= (msb(maxabs) > 13) ? msb(maxabs) - 5'd13 : 5'd0;
+                            if (dcnt == 0) Mq <= ltf_rep;
+                            is_ltf <= 1'b0; mcnt <= 0;
+                        end else if (dcnt == NSYM-1) begin          // frame done
+                            dcnt <= 0; is_ltf <= 1'b1; maxabs <= 0;
+                        end else begin
+                            dcnt <= dcnt + 1;
+                            if (Mq != 0 && mcnt == Mq - 4'd1) begin is_ltf <= 1'b1; maxabs <= 0; end
+                            else mcnt <= mcnt + 1;
                         end
-                        if (sym == NSYM) begin sym <= 0; maxabs <= 0; end
-                        else sym <= sym + 1;
                     end
                 end
             S_OUT: begin

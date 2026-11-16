@@ -1,0 +1,11 @@
+A rmin 1500, chong nhieu TAT:  60/ 60 khung dung (100.0%), bat nham 0
+A rmin 1500, chong nhieu BAT:  60/ 60 khung dung (100.0%), bat nham 0
+A: KHONG thay khac biet BAT/TAT -> kiem tra da nap bitstream moi chua (build.tcl impl, cap nhat XSA).
+B tone  +0 dB, chong nhieu BAT:  57/ 57 khung dung (100.0%), bat nham 3, bit sua TB 36.9
+B tone  +6 dB, chong nhieu BAT:  34/ 59 khung dung ( 57.6%), bat nham 25, bit sua TB 52.8
+B tone +10 dB, chong nhieu BAT:   5/ 13 khung dung ( 38.5%), bat nham 47, bit sua TB 91.3
+B tone  +0 dB, chong nhieu TAT:  60/ 60 khung dung (100.0%), bat nham 0, bit sua TB 39.5
+B tone  +6 dB, chong nhieu TAT:   1/  1 khung dung (100.0%), bat nham 59, bit sua TB 49.0
+B tone +10 dB, chong nhieu TAT:   0/  0 khung dung (  0.0%), bat nham 0, bit sua TB NaN
+C im lang 30 s, chong nhieu BAT: 0 khung bat nham
+C chi tone +6 dB 30 s, chong nhieu BAT: 1 khung bat nham

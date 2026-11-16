@@ -20,6 +20,6 @@ y  = ofdm_upconvert(bb, P, S.fc);
 y  = S.amp * y / max(abs(y));                           % chuan hoa dinh
 info.nframes   = nfr * S.repeat;
 info.duration  = numel(y) / P.fs;
-info.frame_ms  = (P.N + P.CP) * (P.NSYM + 2) / P.fsb * 1e3;
+info.frame_ms  = (P.N + P.CP) * P.frame_syms / P.fsb * 1e3;
 info.papr_db   = 20*log10(max(abs(y)) / sqrt(mean(y(y ~= 0).^2)));
 end

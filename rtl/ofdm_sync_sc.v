@@ -6,6 +6,12 @@
 //
 //  * Metric  P(d) = sum_{m<L} conj(r[d+m]) r[d+m+L],  R(d) = sum_{m<2L} |r[d+m]|^2
 //    updated recursively (exact integers). Detect 2|P| * 256 >= thr * R, R >= rmin.
+//  * Narrow-band rejection (rev 2, 12/11/2026): a tone, DC offset or hum is periodic
+//    with ANY lag, so it gives P(lag 64) ~ P(lag 32). The SC preamble uses only even
+//    subcarriers: half of them (k = 0 mod 4) add and half (k = 2 mod 4) cancel at lag
+//    32, so for the preamble |P32| ~ 0.13 |P| (measured). A sample only counts as
+//    "above" when also |P32| < 0.625 |P|.  P32(d) = sum_{j=d+32}^{d+95} conj(r[j]) r[j+32].
+//    nb_off = 1 disables the test (old behaviour).
 //  * Timing : midpoint of the above-threshold plateau (~ middle of SC CP)
 //             FFT window of SC = mid + CP/4 + toffs   (default 8 samples into CP)
 //  * CFO    : P at max |P| -> CORDIC (translate) -> angle phi = pi*eps
@@ -38,6 +44,8 @@ module ofdm_sync_sc #(
     input  wire [31:0] rmin,             // minimum energy R (gate on silence)
     input  wire [7:0]  toffs,            // signed timing offset (samples)
     input  wire [2:0]  bb_shift,         // extra gain (left shift) before CORDIC, saturated
+    input  wire        nb_off,           // 1 = disable the narrow-band (lag-32) rejection
+    input  wire [3:0]  ltf_rep,          // rev 3: extra LTF after every ltf_rep data symbols (0 = none)
     // CFO estimate -> CORDIC translate
     output reg  [31:0] m_axis_cfo_tdata,
     output reg         m_axis_cfo_tvalid,
@@ -82,10 +90,10 @@ module ofdm_sync_sc #(
     end
 
     // ---------------- metric pipeline (one sample at a time) ------------------
-    localparam [2:0] M_IDLE=0, M_RA=1, M_RC=2, M_WC=3, M_UPD=4, M_DEC=5;
+    localparam [2:0] M_IDLE=0, M_RA=1, M_RC=2, M_WC=3, M_WE=4, M_WF=5, M_UPD=6, M_DEC=7;
     reg [2:0]  mst;
-    reg [31:0] smp_b, smp_a, smp_c;
-    reg signed [47:0] Pr, Pi, R;
+    reg [31:0] smp_b, smp_a, smp_c, smp_e, smp_f;   // r[n], r[n-L], r[n-2L], r[n-L/2], r[n-3L/2]
+    reg signed [47:0] Pr, Pi, R, Qr, Qi;            // Q = P at lag L/2
     reg        met_valid;            // one-cycle strobe: metric for d = ncnt-2L
     reg [31:0] met_d;
 
@@ -96,12 +104,17 @@ module ofdm_sync_sc #(
     wire signed [33:0] dPr = ($signed(ar)*br + $signed(ai)*bi) - ($signed(cr)*ar + $signed(ci)*ai);
     wire signed [33:0] dPi = ($signed(ar)*bi - $signed(ai)*br) - ($signed(cr)*ai - $signed(ci)*ar);
     wire signed [33:0] dR  = ($signed(br)*br + $signed(bi)*bi) - ($signed(cr)*cr + $signed(ci)*ci);
+    // lag L/2: conj(e)*b - conj(f)*a   (e = r[n-L/2], f = r[n-3L/2])
+    wire signed [15:0] er = smp_e[15:0], ei = smp_e[31:16];
+    wire signed [15:0] fr = smp_f[15:0], fi = smp_f[31:16];
+    wire signed [33:0] dQr = ($signed(er)*br + $signed(ei)*bi) - ($signed(fr)*ar + $signed(fi)*ai);
+    wire signed [33:0] dQi = ($signed(er)*bi - $signed(ei)*br) - ($signed(fr)*ai - $signed(fi)*ar);
 
     always @(posedge aclk) begin
         met_valid <= 1'b0;
         wr_en     <= 1'b0;
         if (!aresetn) begin
-            mst <= M_IDLE; ncnt <= 0; Pr <= 0; Pi <= 0; R <= 0; met_d <= 0;
+            mst <= M_IDLE; ncnt <= 0; Pr <= 0; Pi <= 0; R <= 0; Qr <= 0; Qi <= 0; met_d <= 0;
         end else case (mst)
             M_IDLE: if (s_axis_tvalid) begin
                         smp_b     <= s_axis_tdata;
@@ -110,10 +123,13 @@ module ofdm_sync_sc #(
                         mst <= M_RA;
                     end
             M_RA:   begin rd_m_addr <= ncnt[AW-1:0] - 2*L; mst <= M_RC; end   // r[n-2L]
-            M_RC:   begin smp_a <= rd_m_q; mst <= M_WC; end
-            M_WC:   begin smp_c <= rd_m_q; mst <= M_UPD; end
+            M_RC:   begin smp_a <= rd_m_q; rd_m_addr <= ncnt[AW-1:0] - L/2;   mst <= M_WC; end
+            M_WC:   begin smp_c <= rd_m_q; rd_m_addr <= ncnt[AW-1:0] - 3*L/2; mst <= M_WE; end
+            M_WE:   begin smp_e <= rd_m_q; mst <= M_WF; end
+            M_WF:   begin smp_f <= rd_m_q; mst <= M_UPD; end
             M_UPD:  begin
                         Pr <= Pr + dPr; Pi <= Pi + dPi; R <= R + dR;
+                        Qr <= Qr + dQr; Qi <= Qi + dQi;
                         met_d <= ncnt - (2*L - 1);
                         ncnt  <= ncnt + 1;
                         mst   <= M_DEC;
@@ -132,7 +148,13 @@ module ofdm_sync_sc #(
     wire [48:0] pabs = pmax + (pmin >> 1);
     wire [57:0] lhs  = {pabs, 9'd0};
     wire [57:0] rhs  = R[47:0] * thr;
-    wire        above = (lhs >= rhs) && (R >= $signed({16'd0, rmin})) && (R > 0);
+    wire [47:0] aQr  = Qr[47] ? -Qr : Qr;
+    wire [47:0] aQi  = Qi[47] ? -Qi : Qi;
+    wire [47:0] qmax = (aQr > aQi) ? aQr : aQi;
+    wire [47:0] qmin = (aQr > aQi) ? aQi : aQr;
+    wire [48:0] qabs = qmax + (qmin >> 1);
+    wire        nb_ok = nb_off || ({qabs, 3'd0} < ({2'd0, pabs} * 5));      // |Q| < 0.625 |P|
+    wire        above = (lhs >= rhs) && (R >= $signed({16'd0, rmin})) && (R > 0) && nb_ok;
 
     // ---------------- detection FSM -------------------------------------------
     localparam [3:0] D_WAITLOW=0, D_ARM=1, D_PLAT=2, D_NORM=3, D_CFO=4, D_PHI=5,
@@ -205,7 +227,11 @@ module ofdm_sync_sc #(
     // ---------------- output reader -------------------------------------------
     localparam [2:0] O_IDLE=0, O_WAIT=1, O_RD=2, O_LAT=3, O_SEND=4;
     reg [2:0]  ost;
-    reg [7:0]  osym;          // 0 = LTF, 1..NSYM data
+    reg [7:0]  osym;          // symbols sent in this frame (LTFs included)
+    reg        o_ltf;         // current symbol is an LTF
+    reg [7:0]  odc;           // data symbols completed
+    reg [3:0]  omc;           // data symbols since the last LTF
+    reg [3:0]  Mo;            // ltf_rep latched at frame start
     reg [7:0]  oidx;          // 0..NFFT-1
     reg [31:0] oaddr;         // absolute sample index
     reg [11:0] ooff;          // oaddr - n0
@@ -227,6 +253,7 @@ module ofdm_sync_sc #(
         end else case (ost)
             O_IDLE: if (out_go) begin
                     osym <= 0; oidx <= 0;
+                    o_ltf <= 1'b1; odc <= 0; omc <= 0; Mo <= ltf_rep;
                     oaddr <= n0 + SYML;           // LTF window start
                     ooff  <= SYML;
                     ost   <= O_WAIT;
@@ -251,8 +278,14 @@ module ofdm_sync_sc #(
                         if (oidx == NFFT-1) begin
                             oidx <= 0;
                             oaddr <= oaddr + NCP + 1; ooff <= ooff + NCP + 1;
-                            if (osym == NOUT-1) begin ost <= O_IDLE; out_done <= 1'b1; end
-                            else begin osym <= osym + 1; ost <= O_WAIT; end
+                            osym <= osym + 1;
+                            if (o_ltf) begin o_ltf <= 1'b0; omc <= 0; ost <= O_WAIT; end
+                            else if (odc == NSYM-1) begin ost <= O_IDLE; out_done <= 1'b1; end
+                            else begin
+                                odc <= odc + 1; ost <= O_WAIT;
+                                if (Mo != 0 && omc == Mo - 4'd1) o_ltf <= 1'b1;
+                                else omc <= omc + 1;
+                            end
                         end else begin
                             oidx <= oidx + 1; oaddr <= oaddr + 1; ooff <= ooff + 1;
                             ost <= O_WAIT;

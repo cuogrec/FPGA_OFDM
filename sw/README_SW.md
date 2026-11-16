@@ -72,3 +72,19 @@ Mặc định sau khi nạp: `gain_shift 2`, `thr 180`, `fec 1`, `agc 1`. Dòng 
 
 - Ở tín hiệu yếu, rmin được giữ cao hơn: thành phần thứ ba đổi từ `min(4·Rn, Rs/2)` thành `min(16·Rn, Rs/6)`. Lần đo bản 3.1 có 4 khung bắt nhầm ở biên độ 0,005 khi rmin tụt xuống cỡ Rs/8 đến Rs/16; tín hiệu mạnh không đổi (vẫn Rs/32).
 - Chưa đo trên board. Bắt nhầm ở mức rất yếu cần sửa tận gốc trong `ofdm_sync_sc` (khoảng chờ sau mỗi khung), thuộc chặng 3.
+
+### Bản 3.3 (12/11/2026, chặng 3 việc 1)
+
+- Lệnh `p`: bật/tắt chống nhiễu bằng hẹp trong bộ dò khung (gpio_cfg bit 27 = nb_off). Mặc định bật. Cần bitstream rev 2 (`rtl/ofdm_sync_sc.v` có cổng `nb_off`); với bitstream cũ lệnh không có tác dụng.
+- Dòng trạng thái thêm `nb 1` / `nb 0`.
+
+### Bản 3.4 (12/11/2026)
+
+- Khi chống nhiễu bằng hẹp BẬT (`nb 1`), luật rmin lúc gói đo trông như im lặng (Rs < 2·Rn) đổi từ `6·Rs` thành `1,1·Rn`: tone hoặc DC trong khoảng nghỉ đã bị bitstream rev 2 chặn, nên rmin không cần cao nữa. Luật cũ chặn luôn khung thật khi có tone mạnh hơn OFDM hoặc khi tín hiệu rất yếu. Với bitstream cũ, gõ `p` để `nb 0` (giữ luật cũ).
+
+## rev 3.5 (12/11/2026)
+- Lệnh `f`: lặp LTF, nhập 0 / 4 / 8 (gpio_cfg bit 31:28, cần bitstream rev 3). Bộ phát phải đặt cùng giá trị (`S.ltf_rep`). Dòng status thêm `ltf N`.
+
+## rev 3.6 (14/11/2026)
+- Hiển thị gọn trong `g` (mặc định): mỗi khung một dòng ngắn, không in đoạn chữ; ẩn các dòng `#` (AGC, rmin), vẫn giữ cảnh báo CLIP; bản tin ghép xong in một lần giữa hai đường kẻ; lần phát lặp lại giống hệt chỉ in `>>> message repeated (k), same as above`. Lệnh `v` bật lại hiển thị đầy đủ như cũ. Status thêm `verbose N`.
+- AGC: khi im lặng, gain chỉ được tăng chậm (gain < 2) nếu khung gần nhất sau khi tăng vẫn dưới 0,40 toàn thang. Bản cũ tăng gain trong khoảng nghỉ giữa hai lần phát nên khung đầu của lần phát sau bị gần bão hòa (14/11: đỉnh 1719–1801/2048, sửa 60–68 bit, 1 khung BAD).

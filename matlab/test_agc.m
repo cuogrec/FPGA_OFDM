@@ -19,7 +19,7 @@ T.pass   = 97;               % % khung dung can dat
 T.limit  = 0.004;            % bien do nho hon muc nay chi ghi nhan
 
 P  = ofdm_params();
-Tf = (P.N + P.CP) * (P.NSYM + 2) / P.fsb + 0.150;
+Tf = (P.N + P.CP) * P.frame_syms / P.fsb + 0.150;
 expct = floor(T.secs / Tf);
 
 %% ---------------- CHUAN BI BOARD ----------------
