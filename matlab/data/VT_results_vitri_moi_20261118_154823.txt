@@ -1,0 +1,9 @@
+Vi tri: vitri_moi   (2026-11-18 15:48)
+V0 im lang 20 s     : 0 bat nham, nhieu nen dinh -67.4 dBFS
+V1 amp 0,3          : 100/100 khung dung (100%, chuan 100%), bat nham 0, bit sua TB 0.0 (chuan 2.1) max 0, ADC -55.6 dBFS (chuan -20.9), gain 6
+V2 kenh (dump)      : SNR 20.3 dB (chuan 17.4), song mang yeu nhat 17.7 dB o 31.81 kHz, gon |H| 2.7 dB, tre -20 dB 0.38 ms (CP 4 ms), rho 0.995
+V3 amp 0,9          : 100/100 khung dung (100%, chuan 100%), bat nham 0, bit sua TB 0.0 (chuan 2.1) max 0, ADC -48.1 dBFS (chuan -11.4), gain 6
+V4 van ban x3       : 3/3 khung OK, 3/3 ban tin ghep xong
+
+CHAN DOAN
+* Tin hieu thu yeu hon lan chuan 35 dB -> dau do lech huong / bi che / xa hon. Dua ve doi dien hoac tang amp.

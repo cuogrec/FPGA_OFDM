@@ -1,0 +1,17 @@
+s
+sync frames 2498, demap frames 2498, I2S drops 0, last CFO -0.49 Hz
+gain_shift 6  ch L  sync_en 0  thr 180 (0.70)  toffs 0  bb_shift 2  rmin 181395  test 0  fec 1  agc 1  nb 1  ltf 0  verbose 1
+> g
+Receiving... (any key = stop)  rmin 181395  gain_shift 6
+FEC ON (rate 1/2, Viterbi)
+# auto level ON: gain_shift and rmin follow the signal ('a' = off)
+[OK ] t    1911 ms seq   0/1 len  77 CFO  -1.07 Hz  bytes 224  "Kiem tra vi tri moi: Truyen thong thuy am OFDM 33 kHz tren ZCU104. 0123456789"  fixed 0
+>>> message complete (1 frames): Kiem tra vi tri moi: Truyen thong thuy am OFDM 33 kHz tren ZCU104. 0123456789
+# rmin 181395 to 565634 (frame)
+[OK ] t    2322 ms seq   0/1 len  77 CFO  -0.97 Hz  bytes 224  "Kiem tra vi tri moi: Truyen thong thuy am OFDM 33 kHz tren ZCU104. 0123456789"  fixed 0
+>>> message complete (1 frames): Kiem tra vi tri moi: Truyen thong thuy am OFDM 33 kHz tren ZCU104. 0123456789
+[OK ] t    2731 ms seq   0/1 len  77 CFO  -0.35 Hz  bytes 224  "Kiem tra vi tri moi: Truyen thong thuy am OFDM 33 kHz tren ZCU104. 0123456789"  fixed 0
+>>> message complete (1 frames): Kiem tra vi tri moi: Truyen thong thuy am OFDM 33 kHz tren ZCU104. 0123456789
+stopped: 3 OK, 0 CRC errors | detected 3, demapped 3, I2S drops 0
+level: last peak 238, max 238 of 2048, crest 2.7 | gain_shift 6, rmin 565634, auto on, 0 gain change(s)
+> 

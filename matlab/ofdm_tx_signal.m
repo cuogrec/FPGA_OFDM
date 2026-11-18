@@ -15,7 +15,10 @@ for r = 1:S.repeat
         bb = [bb; x; gap]; %#ok<AGROW>
     end
 end
-bb = [bb; zeros(round(0.1 * P.fsb), 1)];               % duoi 100 ms
+% duoi im lang: card am thanh/driver con giu mot doan dem khi dung phat, neu duoi qua ngan
+% thi phan cuoi khung cuoi bi cat (khung cuoi BAD, fixed ~120). Mac dinh 600 ms.
+if isfield(S, 'postroll_ms'), tail_ms = S.postroll_ms; else, tail_ms = 600; end
+bb = [bb; zeros(round(tail_ms * 1e-3 * P.fsb), 1)];
 y  = ofdm_upconvert(bb, P, S.fc);
 y  = S.amp * y / max(abs(y));                           % chuan hoa dinh
 info.nframes   = nfr * S.repeat;

@@ -132,3 +132,8 @@ time,cmd,tag,dist_m,depth_m,gain_shift,rmin,test,n_frames,crc_ok,detected,demapp
 2026-11-14 11:22:14,d,vitri_moi_V2_dump,NaN,NaN,1,54747,1,7,7,,,,0,0.0904,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261114_112136_d_vitri_moi_V2_dump_dump.txt,"xo"
 2026-11-14 11:23:11,g,vitri_moi_V3_amp090,NaN,NaN,1,54747,1,100,100,100,100,0,0,-0.0989,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261114_112216_g_vitri_moi_V3_amp090.csv,"xo"
 2026-11-14 11:23:18,g,vitri_moi_V4_vanban,NaN,NaN,0,123562,0,3,3,3,3,0,NaN,-0.14,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261114_112314_g_vitri_moi_V4_vanban.csv,"xo"
+2026-11-18 15:45:47,g,vitri_moi_V0_imlang,NaN,NaN,3,3155,1,0,0,0,0,0,NaN,NaN,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261118_154525_g_vitri_moi_V0_imlang.csv,"be"
+2026-11-18 15:46:42,g,vitri_moi_V1_amp030,NaN,NaN,3,1500,1,100,100,100,100,0,0,0.144,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261118_154548_g_vitri_moi_V1_amp030.csv,"be"
+2026-11-18 15:47:17,d,vitri_moi_V2_dump,NaN,NaN,6,55648,1,6,6,,,,0,0.0488,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261118_154642_d_vitri_moi_V2_dump_dump.txt,"be"
+2026-11-18 15:48:14,g,vitri_moi_V3_amp090,NaN,NaN,6,55648,1,100,100,100,100,0,0,0.0971,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261118_154721_g_vitri_moi_V3_amp090.csv,"be"
+2026-11-18 15:48:21,g,vitri_moi_V4_vanban,NaN,NaN,6,181395,0,3,3,3,3,0,NaN,-0.797,C:\Users\npcuo\Documents\ofdm33\matlab\data\20261118_154817_g_vitri_moi_V4_vanban.csv,"be"

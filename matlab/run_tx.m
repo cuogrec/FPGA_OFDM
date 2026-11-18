@@ -11,14 +11,14 @@ P = ofdm_params();
 S.mode        = 'text';        % 'text' van ban | 'test' khung thu (dem bit loi) | 'tone' | 'sweep'
 S.fec         = true;         % true = ma chap 1/2 + xen ke (board: lenh e). Van ban 106 byte/khung
 S.test_frames = 50;            % so khung moi lan phat o che do 'test' (seq 0..49, toi da 256)
-S.text        = 'Hello ZCU104! Thu nghiem OFDM thuy am 33khz. Co nhung moi quan he ket thuc khong phai vi het yeu ma vi yeu den dau cung khong the co 1 cai ket . Dau nhat la luc phai tu tay buong nguoi minh van con thuong vo cung trong khi trai tim minh van con dang van xin duoc o lai . Minh biet cham dut la dung nhung trong long cua minh';
+S.text        = 'Hello ZCU104! Thu nghiem OFDM thuy am 33khz, WICOMLAB E715 NGAY 18/11/2026. Có những mối quan hệ kết thúc không phải vì hết yêu, mà vì yêu đến đâu cũng không thể có 1 cái kết. Đau nhất là lúc phải tự tay buông người mình vẫn còn thương trong khi trái tim mình van xin được ở lại. Mình biết chấm dứt là đúng nhưng trong lòng chẳng có gì là nhẹ nhõm cả. Chỉ là từ hôm đó mỗi ngày đều phải học cách sống tiếp với 1 người mình vẫn còn yêu';
 S.repeat      = 3;             % so lan lap lai toan bo ban tin
 S.ltf_rep     = 0;             % chen lai LTF sau moi N symbol du lieu: 0 = khong (khung cu), 4 hoac 8.
                                % Board PHAI dat cung gia tri (lenh f, bitstream rev 3). Dung khi nuoc dong / di chuyen
 S.gap_ms      = 50;            % khoang lang giua cac khung (ms). A8 12/11: 150/50/20 deu 100% trong xo;
                                % 50 ms -> 2,07 kbit/s chu co FEC. Moi truong lon tieng vang dai: tra ve 150
 S.preroll_ms  = 300;           % im lang dau file (card am thanh khoi dong)
-S.amp         = 0.9;           % bien do dinh (0..1 full scale). Tang dan neu thu yeu
+S.amp         = 1;           % bien do dinh (0..1 full scale). Tang dan neu thu yeu
 S.papr_clip_db= Inf;           % cat dinh baseband, vd 8 (dB tren RMS); Inf = tat
 S.fc          = P.fc;          % song mang - FPGA co dinh 33 kHz, chi doi de thu nghiem
 S.tone_s      = 10;            % thoi luong che do 'tone' / 'sweep' (s)
@@ -71,12 +71,14 @@ if S.selftest && strcmp(S.mode, 'text') && S.fec
     pw = mean(r(r ~= 0).^2);
     r  = r + sqrt(pw / 10^(S.selftest_snr/10) * (P.fs/2) / 4000) * randn(size(r));
     res = ofdm_rx_ref(r, P, 'passband');
-    nok = 0;  nfix = zeros(1, numel(res));  txt = '';
+    nok = 0;  nfix = zeros(1, numel(res));  u8 = uint8([]);
     for k = 1:numel(res)
         [q, ok, nfix(k)] = ofdm_fec_unframe(res(k).bytes);
         nok = nok + ok;
-        if ok && k <= size(pl, 1), txt = [txt char(q(4:3+min(q(3),106)))]; end %#ok<AGROW>
+        if ok && k <= size(pl, 1), u8 = [u8, q(4:3+min(q(3),106))]; end %#ok<AGROW>
     end
+    % ghep BYTE truoc roi moi giai UTF-8: mot chu co dau co the bi cat giua hai khung
+    try, txt = native2unicode(u8, 'UTF-8'); catch, txt = char(u8); end
     fprintf('Tu kiem tra FEC (SNR %g dB, 4 tia): %d khung, CRC OK %d, bit kenh da sua/khung: %s\n', ...
         S.selftest_snr, numel(res), nok, mat2str(nfix));
     if ~isempty(txt), fprintf('  -> "%s"\n', txt); end

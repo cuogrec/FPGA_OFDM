@@ -16,7 +16,7 @@ clear; clc;
 T.port     = 'COM6';
 T.device   = 'Scarlett';
 T.tag      = 'vitri_moi';       % doi ten neu do nhieu vi tri (vd 'vitri_B')
-T.note     = 'xo';
+T.note     = 'be';
 T.thr      = 180;
 T.amp_lo   = 0.3;               % giong A5 (de so sanh)
 T.amp_hi   = 0.9;
@@ -190,8 +190,13 @@ if st.(field) ~= want, rx_log(key, 'port', port); end
 end
 
 function st = board_status(port)
-o = rx_log('s', 'port', port);
-s = strjoin(o.lines, ' ');
+% lan 's' dau co the chi dung lenh 'g' dang chay (board tra ve 'stopped: ...'), nen hoi lai
+for k = 1:2
+    o = rx_log('s', 'port', port);
+    s = strjoin(o.lines, ' ');
+    if ~isempty(regexp(s, 'agc \d', 'once')), break; end
+    pause(1.0);
+end
 st.gain = tok(s, 'gain_shift (\d+)');  st.rmin = tok(s, 'rmin (\d+)');
 st.test = tok(s, 'test (\d)');  st.fec = tok(s, 'fec (\d)');  st.agc = tok(s, 'agc (\d)');
 st.ltf  = tok(s, 'ltf (\d+)');

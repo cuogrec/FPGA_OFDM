@@ -22,7 +22,7 @@ if S.use_toolbox && exist('audioDeviceWriter', 'class') == 8
         nu = w(u);
         if nu > 0, warning('Underrun %d mau', nu); end
     end
-    pause(0.2); release(w);
+    pause(1.0); release(w);           % cho driver phat het bo dem truoc khi dong
 else
     info = audiodevinfo;
     id = -1;
